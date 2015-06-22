@@ -1,2 +1,7 @@
 # GitHub
-BISCredit work. Program files, logs and results.
+#Joanne Im
+#joanneim@princeton.edu
+
+
+
+Summary: BISCredit work for Professor Sims. Includes program files, logs and results.
