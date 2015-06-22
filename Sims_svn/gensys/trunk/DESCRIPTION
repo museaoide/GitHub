@@ -1,0 +1,13 @@
+Package: gensys
+Type: Package
+Title: Linear rational expectations model solver
+Version: 1.0
+Date: 4.27.2015
+Author: Chris Sims
+Maintainer: <sims@princeton.edu>
+Description: Reads dynamic rational expectations equation systems written as R 
+expressions, differentiates them, and produces a solution equation that 
+characterizes current variables as a function of lagged variables and exogenous 
+disturbances.  Also checks for existence and uniqueness of the solution.
+License: GPL >=2
+Imports: QZ

@@ -1,0 +1,20 @@
+If we draw Sigma from the r.f. posterior, then take one
+Taylor-expansion step away from the MLE for A toward a solution of
+A'A=Sigma, the resulting draw for A is a linear function of Sigma. We
+have the Inverse-Wishart density for Sigma, and since the mapping from
+Sigma to the A draw is a fixed linear function, the Sigma density is
+proportional to the correct density for the A draws.  So we have the
+ingredients for a Metropolis-Hastings MCMC, without having to do any
+iterative equation solving or maximization at each draw.
+
+The linear system to solve is 
+
+((I %x% t(Ahat)) + (t(Ahat) %x% I) %*% P) vec(A - Ahat) = Sigdraw - Sighat,
+
+where P is the matrix such that P %*% vec(A) = vec(t(A)).  Since A has
+zeros in it (or is otherwise a linear function of a smaller number of
+parameters than there are elements in the matrix) some columns of the
+big l.h.s. matrix are not used, and some rows therefore become
+redundant.  Solution by qr.solve should therefore be used.  The matrix
+should be inverted once, at the start, since the inverse will be
+re-used on every draw.  

@@ -1,0 +1,9 @@
+Package: csolve
+Title: Nonlinear equation solver
+Version: 0.0.0.9000
+Authors@R: person("Christopher", "Sims", , "sims@princton.edu", 
+		  role = c("aut", "cre"))
+Description: Solves nonlinear equation systems.  
+Depends: R (>= 3.0)
+License: GPL (>=2.0)
+LazyData: true

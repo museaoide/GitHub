@@ -1,0 +1,9 @@
+Package: blm
+Title: Bayesian time series regression
+Version: 0.1
+Authors@R: "Chris Sims <sims@princeton.edu> [aut, cre]"
+Description: Constructs priors, estimates, forms mgnl data densities.
+Depends:
+    R (>= 3.1.1)
+License: GPL version >=2
+LazyData: true

@@ -1,0 +1,1810 @@
+load("/Users/joanneim/Dropbox/Sims_share/BIScredit/G. Send out/B. Programs/wrkspace121114.RData")
+ls
+ls()
+countrieslongtimeseries2=c("aus", "can", "che", "dan", "fr","it", "jpn", "nl", "no", "pt", "se", "uk", "us", "za")#
+listData=tvvData_noffr2(data, countrieslongtimeseries2, begin=NULL, terminate=NULL, SecondaryBrk=c(2006.75, 2010))#
+results6e =plutusTvv3(listData, H1=10^-6, H2=10^-7, seedA=NULL)#
+save(results6e, file="results6e.RData")#
+postdrawsresults6e=McmcMIr4(results= results6e, nit=10000)#
+save(postdrawsresults6e, file="postdrawsresults6e.RData")
+diag(1)
+##################################FUNCTION: RUN VARS, IRs#
+#9/6/14#
+#
+rfvar6 <- function(data, countries, credittype="apa", powerof=1, nSteps=60){#
+	#function: runs reduced form VARs, IRs over a system of five variables (log defl, log rgdp, short term rate, log credit2gdp, log real, property prices), and one exogenous variable (fed funds rate)#
+	#data: input data source#
+	#countries: input country abbreviation in "", or vector of country abbreviations#
+	#credittype: BIS credit series ("nbpa", "aha", "ahu", "ana", "apa", "apu", "bpa", "bpu")#
+	#power of: set credit2gdp variable to power#
+	#nSteps: number of steps over which to calculate impulse responses#
+	#output:#
+		#vout#
+		#resplst#
+		#smat#
+#create matrix to store data	#
+	smat <- matrix(0, dim(as.matrix(countries))[1],5)#
+	colnames(smat)<-c("deflTst$pval", "rgdpTst$pval", "strateTst$pval", "c2gTst$pval", "rrpiTst$pval")	#
+	rownames(smat)<- countries#
+#
+#Create list objects to store dates#
+	Startdates=ls()#
+	Enddates=ls()		#
+#create list to store list#
+	voutlst<-list()	#
+	resplst<-list()#
+#
+	nCountries=length(countries)#
+for (iCountry in countries){#
+		a<- paste(iCountry, "gdp", sep="_")#
+		b<- paste(iCountry, "defl", sep="_")#
+		d<- paste(iCountry, "rate", sep="_")#
+		f<- paste("rp", iCountry, sep="_")#
+			if(!credittype=="nbpa"){#
+				c<- paste(iCountry, credittype , sep="_")#
+				credit2gdp <- log((data[,c]/data[,a])^powerof)}		#
+			if(credittype=="nbpa"){#
+				credit1=NULL#
+				credit2=NULL#
+				credit1<-paste("apa", iCountry, sep="_")	#
+				credit2<-paste("bpa", iCountry, sep="_")#
+				if (!is.null(credit1) & !is.null(credit2)){#
+				credit2gdp <- log(((data[,g]-data[,h])/data[,a])^powerof)#
+			}#
+			}#
+		rgdp <- log(data[,a]/data[,b])#
+		strate <- data[,d]*100#
+		defl <- log(data[,b])#
+		rrpi<-log(data[,f])#
+		ffr<- (data[, "us_ffr"])#
+		datay<- cbind(defl, rgdp, strate, credit2gdp, rrpi, ffr)		#
+		datay <- ts(datay, start=c(1955,1), freq=4)#
+		datay <-trimts(datay)#
+#Start/End date#
+		start=tsp(datay)[1]#
+		end=tsp(datay)[2]#
+		Startdates[[iCountry]]=start#
+		Enddates[[iCountry]]=end#
+		datax <- datay[,6]#
+		datay <- datay[, 1:5]#
+#reduced form VAR		#
+		vout <-rfvar3(ydata=datay, xdata=datax, lags=5, const=TRUE)#
+#impulse response#
+		resp <- impulsdtrf(vout, nstep=nSteps)	#
+###
+#Tsts#
+###
+#
+#DeflTst#
+	yzrone <- array (1, c(5,5,5))#
+	yzrone[2:5, 1, ]<-0	#
+#
+	deflTst <- restrictVAR(vout, yzrone=yzrone)#
+#RgdpTst#
+	yzrone <- array(1, c(5,5,5))#
+	yzrone[1,2, ]<-0#
+	yzrone[3:5,2, ]<-0#
+	rgdpTst <- restrictVAR(vout, yzrone=yzrone)#
+#StrateTst#
+	yzrone <- array(1, c(5,5,5))#
+	yzrone[1:2,3, ]<-0#
+	yzrone[4:5, 3, ]<-0#
+	strateTst <- restrictVAR(vout, yzrone=yzrone)#
+#C2gTst#
+	yzrone <- array(1, c(5,5,5))#
+	yzrone[1:3,4, ]<-0#
+	yzrone[5, 4, ]<-0#
+	c2gTst <- restrictVAR(vout, yzrone=yzrone)#
+#Rrpi Tst#
+	yzrone <- array (1, c(5,5,5))#
+	yzrone[1:4, 5, ]<-0	#
+	rrpiTst <- restrictVAR(vout, yzrone=yzrone)#
+		smat [iCountry, ]<- c(round(deflTst$pval,3), round(rgdpTst$pval,3), round(strateTst$pval,3), round(c2gTst$pval,3), round(rrpiTst$pval,3))#
+		resplst[[iCountry]]<-resp#
+		voutlst[[iCountry]]<-vout#
+	}#
+#
+	countrysumm<- list(voutlst, resplst, smat=smat, countries=countries, start=Startdates, end=Enddates)#
+	return(countrysumm)#
+	}
+red1=rfvar6(data, countrieslong, credittype="apa")
+red1=rfvar6(data, countrieslong, credittype="apa")countrieslongtimeseries=c("aus","che", "can","uk","us", "za")
+countrieslongtimeseries=c("aus","che", "can","uk","us", "za")
+red1=rfvar6(data, countrieslongtimeseries, credittype="apa")
+#################################
+#Function#
+#################################
+#
+IP <- function(results, postdraw=TRUE, nTrials=1000, countries, shockvars = NULL, responsevars = NULL, shocksize = 1, nSteps = 40, stddev = NULL, shocknames = NULL, varnames = NULL, scale=TRUE) {#
+	#Function: plots all responses to all shocks#
+	#results: output from rfvar6#
+#
+nCountries=length(countries)#
+for (i in 1:nCountries){#
+	iCountry=countries[[i]]#
+#
+	filename=paste("IR6var", iCountry, sep="_")#
+	ir=results[[2]][[i]]#
+#
+if (postdraw==TRUE){#
+	filename=paste("IR6var", iCountry, "bounds", sep="_" )#
+	vout=results[[1]][[i]]#
+	postdraws<-postdraw(vout, nTrials)#
+	nDraws = dim(postdraws$smat)[3]#
+	irdraws = array(NA, c(dim(ir), nDraws))#
+	for (iDraw in (1:nDraws)){#
+		drawReg = list(By = postdraws$By[,,,iDraw], Bx = postdraws$Bx[,,iDraw])#
+		irdraws[,,,iDraw] = impulsdtrf(drawReg, smat = t(postdraws$smat[,,iDraw]),#
+		nstep = dim(irdraws)[3])#
+	}#
+	} #
+else {irdraws = NULL}#
+#
+	# Defaults to all structural shocks, all responses#
+	nVar = dim(ir)[1]#
+	if (is.null(shockvars)) {shockvars = 1:nVar}#
+	if (is.null(responsevars)) {responsevars = 1:nVar}#
+	nShockvars = length(shockvars)#
+	nRespvars = length(responsevars)#
+	if (is.null(varnames)){varnames = rownames(ir)}#
+#
+#arrange#
+	gRange = 1:(nSteps)#
+	arr = c(nRespvars, nShockvars)#
+	par(mfrow = arr,col.lab="black",col.main="black", #
+	  oma=c(1,3,3,2), mar=c(1,.5,.5,.5), tcl=-0.1, mgp=c(0,0,0))#
+	axisline = rep(0,(nSteps + 2))#
+#
+for (iRespvar in responsevars) {#
+		iRespseries = shocksize * ir[iRespvar,,]#
+		iResptrials = shocksize * irdraws[iRespvar,,,]#
+		# Getting error bands, if appropriate#
+		if (!is.null(iResptrials) & length(iResptrials > 0)){#
+			iRespbounds = array(NA, c(nSteps, 2, nShockvars))#
+			for (iShock in shockvars){#
+				iShocktrials = iResptrials[iShock,,]#
+				iShockbounds = t(apply(iShocktrials,1,quantile,probs = c(.025,.975)))#
+				iRespbounds[,,iShock] = iShockbounds[1:(nSteps),]#
+			}#
+		} else {#
+			iRespbounds = NULL#
+		}#
+		#Plot scale#
+		yMax = max(iRespseries, iRespbounds, 0) + .0001 * abs(max(iRespseries, iRespbounds))#
+		yMin =  min(iRespseries, iRespbounds, 0) - .0001 * abs(min(iRespseries, iRespbounds))#
+		for (iShockvar in shockvars){#
+			#Plotting each series#
+			upper = iRespbounds[,2,iShockvar]#
+			lower = iRespbounds[,1,iShockvar]#
+			#Plot#
+			plot(iRespseries[iShockvar, 1:nSteps], ylim = c(yMin, yMax), type = 'l', lwd = 1,#
+			 xlab = '', ylab = '', yaxt = 'n', xaxt = 'n')#
+			lines(axisline, type = 'l', lwd = 2)#
+			#Add scaled axis#
+			if (scale==TRUE){#
+			iUstd=results[[1]][[iCountry]]$u#
+			Omega = crossprod(iUstd) / dim(iUstd)[1]#
+			stddev = sqrt(Omega[iShockvar, iShockvar])	#
+			}#
+			else {stddev =1}#
+			if (!is.null(stddev)) {#
+					 tickspots = axTicks(2)#
+					 scaleticks = tickspots / stddev#
+					 scaleticks = signif(round(scaleticks, 2), 2)#
+				 }#
+			axis(side=2, at=tickspots, cex.axis=.75)#
+			#Plot bounds	#
+				if (!is.null(upper)) {#
+					polygon(c(gRange, rev(gRange)), c(lower[gRange], rev(upper[gRange])),  #
+					col=rgb(0, 0, 1,0.3))#
+				}#
+			#Text labels#
+			responsetitle = paste(iCountry, varnames[iRespvar], sep = '_')#
+			shocktitle= paste (iCountry, varnames[iShockvar], sep='_')#
+			#Adding variable name and axis on leftmost plot#
+			if (which(shockvars == iShockvar, arr.ind = TRUE) == 1) {#
+				mtext(responsetitle, side = 2, line = 2, cex = .5)#
+			}#
+			#Shock name if appropriate#
+			if (which(responsevars == iRespvar, arr.ind = TRUE) == 1) {#
+				mtext(shocktitle, side = 3, line = 0, cex = .5)#
+			}#
+	}#
+	}#
+#
+bigtitle = paste('Impulse response of', iCountry, 'over', as.character(nSteps), 'periods', sep = ' ')#
+#
+title(bigtitle, outer = TRUE, cex = 1.2)#
+#
+dev.copy2pdf(file = filename)#
+}#
+}#
+#################################
+#Execute
+IP(red1)
+IP(red1, countries=countrieslongseries)
+IP(red1, countries=countrieslongtimeseries)
+IP(red1, countries=countrieslongtimeseries, postdraw=FALSE)
+match(1, 1)
+porder=1:5
+match(1:length(porder))
+match(1:length(porder), porder)
+match(1:length(porder)-1, porder)
+match(c(1,2), porder)
+mat=matrix(1, 5,5)
+chol(matrix[porder, porder])
+porder
+amt
+mat
+chol(mat)
+matrix[porder, porder]
+matrix[1:5, 1:5]
+mat[1:5, 1:5]
+countrieslongtimeseries=c("aus","che", "can","uk","us", "za")#
+listData=tvvData_noffr2(data, countrieslongtimeseries, begin=NULL, terminate=NULL, SecondaryBrk=c(1989.5, 2006.75, 2010))#
+results5e=plutusTvv3(listData, H1=10^-3, H2=10^-4, seedA=NULL)#
+save(results5e, file="results5e.RData")
+residualsPlot2<- function(results, plotvar="rgdp"){#
+	#Function: plot raw rad1 #
+	#Countries: Vector of country abbreviations#
+u=results$vout$var$u#
+dimnames(u)=dimnames(results$opt$listData$Y)#
+Tsigbrk=results$Tsigbrk#
+countries=results$opt$listData$countries#
+nCountries=length(countries)#
+arr = c(ceiling(nCountries/6), 6)#
+par (mfrow=arr, col.lab="black", col.main="black", oma=c(1,3,3,2), mar=c(1, 1, 1, 1), tcl = -.1, mgp=c(0,0,0))#
+#
+for (i in 1:nCountries){#
+	iCountry<-countries[i]#
+	resid0<-u[(Tsigbrk[i]:Tsigbrk[i+1]), plotvar]#
+	resid <-ts(resid0, start=1, frequency=4)#
+	title=iCountry#
+	ts.plot(resid, type="h", main=title, xlab='',ylab='')#
+	abline(a=0, b=0, h=0)#
+}#
+#
+plotTitle=paste("SVAR residuals of", plotvar, sep=" ")#
+filename=paste("SVAR_residuals", plotvar, sep="_")#
+title(plotTitle, outer = TRUE, cex = 1.2)#
+dev.copy2pdf(file = filename)#
+}
+residualsPlot2(results5e)
+str(results5e)
+str(results5e$opt)
+str(results5e$opt$listData$Start)
+results5e$opt$listData$Start
+results5e$opt$listData$End
+results5e$opt$listData$Tsigbrk
+results5e$opt$Tsigbrk
+results5e$opt$listData$Y
+results5e$opt$listData$Start
+countries=countrieslongtimeseries
+#function: #
+		#stacks country data (log defl, log rgdp, short term rate, log credit2gdp, log real, property prices) to use in plutusTvv.., and converts data into an annual time series that begins with year 1#
+	#data: spreadsheet of current price gdp (country abbrev_gdp), gdp deflator (country abbrev_defl), private credit (country abbrev_credittype), rate (country abbrev_rate), real residential prices (rp_country abbrev)#
+	#countries: vector of country abbreviation.#
+	#credittype: BIS credit series ("nbpa", "aha", "ahu", "ana", "apa", "apu", "bpa", "bpu")#
+	#power of: change if you want to estimate a nonlinear model for credit2gdp. Default is 1#
+	#output: list#
+		#Y: T x nvar dependent variable data matrix. #
+		#X: T x nx exogenous variable data matrix. This is the country dummy matrix#
+		#Tsigbrks: "structural breaks", which for us is the last observation date for a country#
+		#countries: countries (omits countries that didn't have the credit series desired)#
+		#dlength: length of series by country#
+		#Start: start date of a country's series#
+		#End: enddate of a country's series#
+#
+####
+#Prepare the data#
+####
+nCountries=length(countries)#
+#
+####
+#Lists#
+####
+Countrylst=array()#
+Y<-list()#
+Xffr<-list()#
+Startdates=list()#
+Enddates=list()#
+dlength=vector("numeric")#
+for (i in 1:nCountries){#
+#
+	iCountry=countries[i]#
+	a<- paste(iCountry, "gdp", sep="_")#
+	b<- paste(iCountry, "defl", sep="_")#
+	d<- paste(iCountry, "rate", sep="_")#
+	f<- paste("rp", iCountry, sep="_")#
+#
+#Credit2GDP data	#
+	credit2gdp=NULL#
+		if(!credittype=="nbpa"){#
+#
+			c<-paste(iCountry, credittype, sep="_")#
+			try(credit2gdp <- data[,c], silent=TRUE)#
+			}		#
+		if(credittype=="nbpa"){#
+			g<-paste(iCountry, "apa", sep="_")#
+			h<-paste(iCountry, "bpa", sep="_")#
+			credit1=NULL#
+			credit2=NULL#
+			try(credit1<-data[,g], silent=TRUE)#
+			try(credit2<-data[,h], silent=TRUE)#
+		#knowingfully misnaming credit to credit2gdp#
+			if (!is.null(credit1) & !is.null(credit2)){		#
+			credit2gdp<- credit1-credit2#
+			}#
+			}			#
+#Transform rgdp, strate, defl, rrpi data		#
+	rgdp <- log(data[,a]/data[,b]/100)#
+	strate <- 100*data[,d]#
+	defl <- log(data[,b])#
+	rrpi<-log(data[,f])#
+	ffr<- data[, "us_ffr"]#
+#
+#If country has credit series data, concatenate the transformed data	#
+	if(!is.null(credit2gdp)){#
+	credit2gdp=log(credit2gdp/data[,a])#
+	datay <- cbind(defl, rgdp, credit2gdp, rrpi, strate)#
+	#Time set the data#
+	datay <- ts(datay, start=c(1955,1), freq=4)#
+	#Only take obs for which there exists obs for all variables#
+	datay <-trimts(datay)
+}
+}
+credittype=="apa"
+credittype=="apa"
+#function: #
+		#stacks country data (log defl, log rgdp, short term rate, log credit2gdp, log real, property prices) to use in plutusTvv.., and converts data into an annual time series that begins with year 1#
+	#data: spreadsheet of current price gdp (country abbrev_gdp), gdp deflator (country abbrev_defl), private credit (country abbrev_credittype), rate (country abbrev_rate), real residential prices (rp_country abbrev)#
+	#countries: vector of country abbreviation.#
+	#credittype: BIS credit series ("nbpa", "aha", "ahu", "ana", "apa", "apu", "bpa", "bpu")#
+	#power of: change if you want to estimate a nonlinear model for credit2gdp. Default is 1#
+	#output: list#
+		#Y: T x nvar dependent variable data matrix. #
+		#X: T x nx exogenous variable data matrix. This is the country dummy matrix#
+		#Tsigbrks: "structural breaks", which for us is the last observation date for a country#
+		#countries: countries (omits countries that didn't have the credit series desired)#
+		#dlength: length of series by country#
+		#Start: start date of a country's series#
+		#End: enddate of a country's series#
+#
+####
+#Prepare the data#
+####
+nCountries=length(countries)#
+#
+####
+#Lists#
+####
+Countrylst=array()#
+Y<-list()#
+Xffr<-list()#
+Startdates=list()#
+Enddates=list()#
+dlength=vector("numeric")#
+for (i in 1:nCountries){#
+#
+	iCountry=countries[i]#
+	a<- paste(iCountry, "gdp", sep="_")#
+	b<- paste(iCountry, "defl", sep="_")#
+	d<- paste(iCountry, "rate", sep="_")#
+	f<- paste("rp", iCountry, sep="_")#
+#
+#Credit2GDP data	#
+	credit2gdp=NULL#
+		if(!credittype=="nbpa"){#
+#
+			c<-paste(iCountry, credittype, sep="_")#
+			try(credit2gdp <- data[,c], silent=TRUE)#
+			}		#
+		if(credittype=="nbpa"){#
+			g<-paste(iCountry, "apa", sep="_")#
+			h<-paste(iCountry, "bpa", sep="_")#
+			credit1=NULL#
+			credit2=NULL#
+			try(credit1<-data[,g], silent=TRUE)#
+			try(credit2<-data[,h], silent=TRUE)#
+		#knowingfully misnaming credit to credit2gdp#
+			if (!is.null(credit1) & !is.null(credit2)){		#
+			credit2gdp<- credit1-credit2#
+			}#
+			}			#
+#Transform rgdp, strate, defl, rrpi data		#
+	rgdp <- log(data[,a]/data[,b]/100)#
+	strate <- 100*data[,d]#
+	defl <- log(data[,b])#
+	rrpi<-log(data[,f])#
+	ffr<- data[, "us_ffr"]#
+#
+#If country has credit series data, concatenate the transformed data	#
+	if(!is.null(credit2gdp)){#
+	credit2gdp=log(credit2gdp/data[,a])#
+	datay <- cbind(defl, rgdp, credit2gdp, rrpi, strate)#
+	#Time set the data#
+	datay <- ts(datay, start=c(1955,1), freq=4)#
+	#Only take obs for which there exists obs for all variables#
+	datay <-trimts(datay)
+}}
+credittype=="apa"
+credittype="apa"
+trimts
+i=1
+credittype="apa"
+iCountry=countries[i]#
+	a<- paste(iCountry, "gdp", sep="_")#
+	b<- paste(iCountry, "defl", sep="_")#
+	d<- paste(iCountry, "rate", sep="_")#
+	f<- paste("rp", iCountry, sep="_")#
+#
+#Credit2GDP data	#
+	credit2gdp=NULL#
+		if(!credittype=="nbpa"){#
+#
+			c<-paste(iCountry, credittype, sep="_")#
+			try(credit2gdp <- data[,c], silent=TRUE)#
+			}		#
+		if(credittype=="nbpa"){#
+			g<-paste(iCountry, "apa", sep="_")#
+			h<-paste(iCountry, "bpa", sep="_")#
+			credit1=NULL#
+			credit2=NULL#
+			try(credit1<-data[,g], silent=TRUE)#
+			try(credit2<-data[,h], silent=TRUE)#
+		#knowingfully misnaming credit to credit2gdp#
+			if (!is.null(credit1) & !is.null(credit2)){		#
+			credit2gdp<- credit1-credit2#
+			}#
+			}
+rgdp <- log(data[,a]/data[,b]/100)#
+	strate <- 100*data[,d]#
+	defl <- log(data[,b])#
+	rrpi<-log(data[,f])#
+	ffr<- data[, "us_ffr"]
+credit2gdp=log(credit2gdp/data[,a])#
+	datay <- cbind(defl, rgdp, credit2gdp, rrpi, strate)#
+	#Time set the data#
+	datay <- ts(datay, start=c(1955,1), freq=4)#
+	#Only take obs for which
+datay
+datay=trimts(datay)
+datay
+Countrylst=na.omit(Countrylst)#
+###
+#Prep Dlength #
+####
+dlength=na.omit(dlength)#
+nCountries=length(dlength)#
+#
+###
+#Prep Y Matrix#
+####
+#
+Y<-do.call("rbind", Y)#
+Y=ts(Y, start=1, frequency=1)#
+Tlength=dim(Y)[1]
+SecondaryBrk=c(1989.75, 2008.5, 2011.25)
+nSecondaryBrks=length(SecondaryBrk)
+nSecondaryBrk
+nSecondaryBrks
+j=1
+Y[[(i-1)*(nSecondaryBrk+1)+j]]
+Y[[(i-1)*(nSecondaryBrk+1)+j]]=window(datay, start=NULL, end=SecondaryBrk[i])
+Y[[(i-1)*(nSecondaryBrks+1)+j]]=window(datay, start=NULL, end=SecondaryBrk[i])
+Y
+j=2
+Y[[(i-1)*(nSecondaryBrks+1)+j]]=window(datay, start=SecondaryBrk[j-1], end=SecondaryBrk[j])
+Y
+YSecondaryBrk=c(NULL, 1989.75, 2008.5, 2011.25, 2014)
+YSecondaryBrk
+tvvData_noffr2<-function(data, countries, SecondaryBrk=c(NA, 1989.75, 2008.5, 2011.25, 2014), begin=NULL, terminate=NULL, credittype="apa", powerof=1){
+}
+nSecondaryBrk[0]
+nSecondaryBrk[[0]
+]
+Y[[(i-1)*(nSecondaryBrks+1)+j]]=window(datay, start=SecondaryBrk[0], end=SecondaryBrk[j])
+SecondaryBrk=c(0, 1989.75, 2008.5, 2011.25, 2014)
+i
+nSecondaryBrks=length(SecondaryBrk)#
+for (j in 1:(nSecondaryBrks-1)){#
+datay0=NULL#
+datay0=window(datay, begin=SecondaryBrk[j], end=SecondaryBrk[j+1])				#
+Y[[(i-1)*(nSecondaryBrks-1)+j]]=datay0#
+Startdates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)#
+Enddates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)#
+}
+Y
+SecondaryBrk
+Startdates
+#################################
+#Function#
+#################################
+#
+tvvData_noffr2<-function(data, countries, SecondaryBrk=c(0, 1989.75, 2008.5, 2011.25, 2014), begin=NULL, terminate=NULL, credittype="apa", powerof=1){#
+	#function: #
+		#stacks country data (log defl, log rgdp, short term rate, log credit2gdp, log real, property prices) to use in plutusTvv.., and converts data into an annual time series that begins with year 1#
+	#data: spreadsheet of current price gdp (country abbrev_gdp), gdp deflator (country abbrev_defl), private credit (country abbrev_credittype), rate (country abbrev_rate), real residential prices (rp_country abbrev)#
+	#countries: vector of country abbreviation.#
+	#credittype: BIS credit series ("nbpa", "aha", "ahu", "ana", "apa", "apu", "bpa", "bpu")#
+	#power of: change if you want to estimate a nonlinear model for credit2gdp. Default is 1#
+	#output: list#
+		#Y: T x nvar dependent variable data matrix. #
+		#X: T x nx exogenous variable data matrix. This is the country dummy matrix#
+		#Tsigbrks: "structural breaks", which for us is the last observation date for a country#
+		#countries: countries (omits countries that didn't have the credit series desired)#
+		#dlength: length of series by country#
+		#Start: start date of a country's series#
+		#End: enddate of a country's series#
+#
+####
+#Prepare the data#
+####
+nCountries=length(countries)#
+#
+####
+#Lists#
+####
+Countrylst=array()#
+Y<-list()#
+Xffr<-list()#
+Startdates=list()#
+Enddates=list()#
+dlength=vector("numeric")#
+for (i in 1:nCountries){#
+#
+	iCountry=countries[i]#
+	a<- paste(iCountry, "gdp", sep="_")#
+	b<- paste(iCountry, "defl", sep="_")#
+	d<- paste(iCountry, "rate", sep="_")#
+	f<- paste("rp", iCountry, sep="_")#
+#
+#Credit2GDP data	#
+	credit2gdp=NULL#
+		if(!credittype=="nbpa"){#
+#
+			c<-paste(iCountry, credittype, sep="_")#
+			try(credit2gdp <- data[,c], silent=TRUE)#
+			}		#
+		if(credittype=="nbpa"){#
+			g<-paste(iCountry, "apa", sep="_")#
+			h<-paste(iCountry, "bpa", sep="_")#
+			credit1=NULL#
+			credit2=NULL#
+			try(credit1<-data[,g], silent=TRUE)#
+			try(credit2<-data[,h], silent=TRUE)#
+		#knowingfully misnaming credit to credit2gdp#
+			if (!is.null(credit1) & !is.null(credit2)){		#
+			credit2gdp<- credit1-credit2#
+			}#
+			}			#
+#Transform rgdp, strate, defl, rrpi data		#
+	rgdp <- log(data[,a]/data[,b]/100)#
+	strate <- 100*data[,d]#
+	defl <- log(data[,b])#
+	rrpi<-log(data[,f])#
+	ffr<- data[, "us_ffr"]#
+#
+#If country has credit series data, concatenate the transformed data	#
+	if(!is.null(credit2gdp)){#
+	credit2gdp=log(credit2gdp/data[,a])#
+	datay <- cbind(defl, rgdp, credit2gdp, rrpi, strate)#
+	#Time set the data#
+	datay <- ts(datay, start=c(1955,1), freq=4)#
+	#Only take obs for which there exists obs for all variables#
+	datay <-trimts(datay)#
+#If desired, truncate the data #
+	if (!is.null(begin)){#
+	datay = window(datay, start=begin)#
+						}	#
+	if (!is.null(terminate)){#
+		datay = window(datay, end=terminate)#
+						}#
+nSecondaryBrks=length(SecondaryBrk)#
+for (j in 1:(nSecondaryBrks-1)){#
+datay0=NULL#
+datay0=window(datay, begin=SecondaryBrk[j], end=SecondaryBrk[j+1])				#
+Y[[(i-1)*(nSecondaryBrks-1)+j]]=datay0#
+dlength[[(i-1)*(nSecondaryBrks-1)+j]]=dim(datay0)[1]#
+Startdates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[1]#
+Enddates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[2]#
+#
+}#
+####
+#Prep Countrylst #
+####
+Countrylst=na.omit(Countrylst)#
+###
+#Prep Dlength #
+####
+dlength=na.omit(dlength)#
+nCountries=length(dlength)#
+#
+###
+#Prep Y Matrix#
+####
+#
+Y<-do.call("rbind", Y)#
+Y=ts(Y, start=1, frequency=1)#
+Tlength=dim(Y)[1]#
+#
+###
+#Prep X Matrix#
+####
+ X <- matrix(0,Tlength, nCountries)#
+ start <- 0#
+for (ic in 1:(nCountries)) {#
+	X[(start + 1:dlength[ic]), ic] <- 1#
+	start <- start + dlength[ic]#
+	}#
+####
+#Prep Tsigbrk#
+####
+dlength=dlength[1:(nCountries-1)]#
+Tsigbrk <- cumsum(dlength)#
+#
+Startdates=unlist(Startdates)#
+names(Startdates)=Countrylst#
+#
+Enddates=unlist(Enddates)#
+names(Enddates)=Countrylst#
+#
+return(list(Y=Y,X=X, Tsigbrk=Tsigbrk, countries=Countrylst, dlength=dlength, Start=Startdates,End=Enddates, SecondaryBrk=SecondaryBrk))#
+}#
+#
+#################################
+#Execute
+}
+{}
+}
+#################################
+#Function#
+#################################
+#
+tvvData_noffr2<-function(data, countries, SecondaryBrk=c(0, 1989.75, 2008.5, 2011.25, 2014), begin=NULL, terminate=NULL, credittype="apa", powerof=1){#
+	#function: #
+		#stacks country data (log defl, log rgdp, short term rate, log credit2gdp, log real, property prices) to use in plutusTvv.., and converts data into an annual time series that begins with year 1#
+	#data: spreadsheet of current price gdp (country abbrev_gdp), gdp deflator (country abbrev_defl), private credit (country abbrev_credittype), rate (country abbrev_rate), real residential prices (rp_country abbrev)#
+	#countries: vector of country abbreviation.#
+	#credittype: BIS credit series ("nbpa", "aha", "ahu", "ana", "apa", "apu", "bpa", "bpu")#
+	#power of: change if you want to estimate a nonlinear model for credit2gdp. Default is 1#
+	#output: list#
+		#Y: T x nvar dependent variable data matrix. #
+		#X: T x nx exogenous variable data matrix. This is the country dummy matrix#
+		#Tsigbrks: "structural breaks", which for us is the last observation date for a country#
+		#countries: countries (omits countries that didn't have the credit series desired)#
+		#dlength: length of series by country#
+		#Start: start date of a country's series#
+		#End: enddate of a country's series#
+#
+####
+#Prepare the data#
+####
+nCountries=length(countries)#
+#
+####
+#Lists#
+####
+Countrylst=array()#
+Y<-list()#
+Xffr<-list()#
+Startdates=list()#
+Enddates=list()#
+dlength=vector("numeric")#
+for (i in 1:nCountries){#
+#
+	iCountry=countries[i]#
+	a<- paste(iCountry, "gdp", sep="_")#
+	b<- paste(iCountry, "defl", sep="_")#
+	d<- paste(iCountry, "rate", sep="_")#
+	f<- paste("rp", iCountry, sep="_")#
+#
+#Credit2GDP data	#
+	credit2gdp=NULL#
+		if(!credittype=="nbpa"){#
+#
+			c<-paste(iCountry, credittype, sep="_")#
+			try(credit2gdp <- data[,c], silent=TRUE)#
+			}		#
+		if(credittype=="nbpa"){#
+			g<-paste(iCountry, "apa", sep="_")#
+			h<-paste(iCountry, "bpa", sep="_")#
+			credit1=NULL#
+			credit2=NULL#
+			try(credit1<-data[,g], silent=TRUE)#
+			try(credit2<-data[,h], silent=TRUE)#
+		#knowingfully misnaming credit to credit2gdp#
+			if (!is.null(credit1) & !is.null(credit2)){		#
+			credit2gdp<- credit1-credit2#
+			}#
+			}			#
+#Transform rgdp, strate, defl, rrpi data		#
+	rgdp <- log(data[,a]/data[,b]/100)#
+	strate <- 100*data[,d]#
+	defl <- log(data[,b])#
+	rrpi<-log(data[,f])#
+	ffr<- data[, "us_ffr"]#
+#
+#If country has credit series data, concatenate the transformed data	#
+	if(!is.null(credit2gdp)){#
+	credit2gdp=log(credit2gdp/data[,a])#
+	datay <- cbind(defl, rgdp, credit2gdp, rrpi, strate)#
+	#Time set the data#
+	datay <- ts(datay, start=c(1955,1), freq=4)#
+	#Only take obs for which there exists obs for all variables#
+	datay <-trimts(datay)#
+#If desired, truncate the data #
+	if (!is.null(begin)){#
+	datay = window(datay, start=begin)#
+						}	#
+	if (!is.null(terminate)){#
+		datay = window(datay, end=terminate)#
+						}#
+nSecondaryBrks=length(SecondaryBrk)#
+for (j in 1:(nSecondaryBrks-1)){#
+datay0=NULL#
+datay0=window(datay, begin=SecondaryBrk[j], end=SecondaryBrk[j+1])				#
+Y[[(i-1)*(nSecondaryBrks-1)+j]]=datay0#
+dlength[[(i-1)*(nSecondaryBrks-1)+j]]=dim(datay0)[1]#
+Startdates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[1]#
+Enddates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[2]#
+#
+}#
+}#
+#
+####
+#Prep Countrylst #
+####
+Countrylst=na.omit(Countrylst)#
+###
+#Prep Dlength #
+####
+dlength=na.omit(dlength)#
+nCountries=length(dlength)#
+#
+###
+#Prep Y Matrix#
+####
+#
+Y<-do.call("rbind", Y)#
+Y=ts(Y, start=1, frequency=1)#
+Tlength=dim(Y)[1]#
+#
+###
+#Prep X Matrix#
+####
+ X <- matrix(0,Tlength, nCountries)#
+ start <- 0#
+for (ic in 1:(nCountries)) {#
+	X[(start + 1:dlength[ic]), ic] <- 1#
+	start <- start + dlength[ic]#
+	}#
+####
+#Prep Tsigbrk#
+####
+dlength=dlength[1:(nCountries-1)]#
+Tsigbrk <- cumsum(dlength)#
+#
+Startdates=unlist(Startdates)#
+names(Startdates)=Countrylst#
+#
+Enddates=unlist(Enddates)#
+names(Enddates)=Countrylst#
+#
+return(list(Y=Y,X=X, Tsigbrk=Tsigbrk, countries=Countrylst, dlength=dlength, Start=Startdates,End=Enddates, SecondaryBrk=SecondaryBrk))#
+}#
+#
+#################################
+#Execute
+}
+#################################
+#Function#
+#################################
+#
+tvvData_noffr2<-function(data, countries, SecondaryBrk=c(0, 1989.75, 2008.5, 2011.25, 2014), begin=NULL, terminate=NULL, credittype="apa", powerof=1){#
+	#function: #
+		#stacks country data (log defl, log rgdp, short term rate, log credit2gdp, log real, property prices) to use in plutusTvv.., and converts data into an annual time series that begins with year 1#
+	#data: spreadsheet of current price gdp (country abbrev_gdp), gdp deflator (country abbrev_defl), private credit (country abbrev_credittype), rate (country abbrev_rate), real residential prices (rp_country abbrev)#
+	#countries: vector of country abbreviation.#
+	#credittype: BIS credit series ("nbpa", "aha", "ahu", "ana", "apa", "apu", "bpa", "bpu")#
+	#power of: change if you want to estimate a nonlinear model for credit2gdp. Default is 1#
+	#output: list#
+		#Y: T x nvar dependent variable data matrix. #
+		#X: T x nx exogenous variable data matrix. This is the country dummy matrix#
+		#Tsigbrks: "structural breaks", which for us is the last observation date for a country#
+		#countries: countries (omits countries that didn't have the credit series desired)#
+		#dlength: length of series by country#
+		#Start: start date of a country's series#
+		#End: enddate of a country's series#
+#
+####
+#Prepare the data#
+####
+nCountries=length(countries)#
+#
+####
+#Lists#
+####
+Countrylst=array()#
+Y<-list()#
+Xffr<-list()#
+Startdates=list()#
+Enddates=list()#
+dlength=vector("numeric")#
+for (i in 1:nCountries){#
+#
+	iCountry=countries[i]#
+	a<- paste(iCountry, "gdp", sep="_")#
+	b<- paste(iCountry, "defl", sep="_")#
+	d<- paste(iCountry, "rate", sep="_")#
+	f<- paste("rp", iCountry, sep="_")#
+#
+#Credit2GDP data	#
+	credit2gdp=NULL#
+		if(!credittype=="nbpa"){#
+#
+			c<-paste(iCountry, credittype, sep="_")#
+			try(credit2gdp <- data[,c], silent=TRUE)#
+			}		#
+		if(credittype=="nbpa"){#
+			g<-paste(iCountry, "apa", sep="_")#
+			h<-paste(iCountry, "bpa", sep="_")#
+			credit1=NULL#
+			credit2=NULL#
+			try(credit1<-data[,g], silent=TRUE)#
+			try(credit2<-data[,h], silent=TRUE)#
+		#knowingfully misnaming credit to credit2gdp#
+			if (!is.null(credit1) & !is.null(credit2)){		#
+			credit2gdp<- credit1-credit2#
+			}#
+			}			#
+#Transform rgdp, strate, defl, rrpi data		#
+	rgdp <- log(data[,a]/data[,b]/100)#
+	strate <- 100*data[,d]#
+	defl <- log(data[,b])#
+	rrpi<-log(data[,f])#
+	ffr<- data[, "us_ffr"]#
+#
+#If country has credit series data, concatenate the transformed data	#
+	if(!is.null(credit2gdp)){#
+	credit2gdp=log(credit2gdp/data[,a])#
+	datay <- cbind(defl, rgdp, credit2gdp, rrpi, strate)#
+	#Time set the data#
+	datay <- ts(datay, start=c(1955,1), freq=4)#
+	#Only take obs for which there exists obs for all variables#
+	datay <-trimts(datay)#
+#If desired, truncate the data #
+	if (!is.null(begin)){#
+	datay = window(datay, start=begin)#
+						}	#
+	if (!is.null(terminate)){#
+		datay = window(datay, end=terminate)#
+						}#
+nSecondaryBrks=length(SecondaryBrk)#
+for (j in 1:(nSecondaryBrks-1)){#
+datay0=NULL#
+datay0=window(datay, begin=SecondaryBrk[j], end=SecondaryBrk[j+1])				#
+Y[[(i-1)*(nSecondaryBrks-1)+j]]=datay0#
+dlength[[(i-1)*(nSecondaryBrks-1)+j]]=dim(datay0)[1]#
+Startdates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[1]#
+Enddates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[2]#
+#
+}#
+}#
+}#
+####
+#Prep Countrylst #
+####
+Countrylst=na.omit(Countrylst)#
+###
+#Prep Dlength #
+####
+dlength=na.omit(dlength)#
+nCountries=length(dlength)#
+#
+###
+#Prep Y Matrix#
+####
+#
+Y<-do.call("rbind", Y)#
+Y=ts(Y, start=1, frequency=1)#
+Tlength=dim(Y)[1]#
+#
+###
+#Prep X Matrix#
+####
+ X <- matrix(0,Tlength, nCountries)#
+ start <- 0#
+for (ic in 1:(nCountries)) {#
+	X[(start + 1:dlength[ic]), ic] <- 1#
+	start <- start + dlength[ic]#
+	}#
+####
+#Prep Tsigbrk#
+####
+dlength=dlength[1:(nCountries-1)]#
+Tsigbrk <- cumsum(dlength)#
+#
+Startdates=unlist(Startdates)#
+names(Startdates)=Countrylst#
+#
+Enddates=unlist(Enddates)#
+names(Enddates)=Countrylst#
+#
+return(list(Y=Y,X=X, Tsigbrk=Tsigbrk, countries=Countrylst, dlength=dlength, Start=Startdates,End=Enddates, SecondaryBrk=SecondaryBrk))#
+}#
+#
+#################################
+#Execute
+tvvData_noffr2(data, countrieslongtimeseries)
+#################################
+#Function#
+#################################
+#
+tvvData_noffr2<-function(data, countries, SecondaryBrk=c(0, 1989.75, 2008.5, 2011.25, 2014), begin=NULL, terminate=NULL, credittype="apa", powerof=1){#
+	#function: #
+		#stacks country data (log defl, log rgdp, short term rate, log credit2gdp, log real, property prices) to use in plutusTvv.., and converts data into an annual time series that begins with year 1#
+	#data: spreadsheet of current price gdp (country abbrev_gdp), gdp deflator (country abbrev_defl), private credit (country abbrev_credittype), rate (country abbrev_rate), real residential prices (rp_country abbrev)#
+	#countries: vector of country abbreviation.#
+	#credittype: BIS credit series ("nbpa", "aha", "ahu", "ana", "apa", "apu", "bpa", "bpu")#
+	#power of: change if you want to estimate a nonlinear model for credit2gdp. Default is 1#
+	#output: list#
+		#Y: T x nvar dependent variable data matrix. #
+		#X: T x nx exogenous variable data matrix. This is the country dummy matrix#
+		#Tsigbrks: "structural breaks", which for us is the last observation date for a country#
+		#countries: countries (omits countries that didn't have the credit series desired)#
+		#dlength: length of series by country#
+		#Start: start date of a country's series#
+		#End: enddate of a country's series#
+#
+####
+#Prepare the data#
+####
+nCountries=length(countries)#
+#
+####
+#Lists#
+####
+Countrylst=array()#
+Y<-list()#
+Xffr<-list()#
+Startdates=list()#
+Enddates=list()#
+dlength=vector("numeric")#
+for (i in 1:nCountries){#
+#
+	iCountry=countries[i]#
+	a<- paste(iCountry, "gdp", sep="_")#
+	b<- paste(iCountry, "defl", sep="_")#
+	d<- paste(iCountry, "rate", sep="_")#
+	f<- paste("rp", iCountry, sep="_")#
+#
+#Credit2GDP data	#
+	credit2gdp=NULL#
+		if(!credittype=="nbpa"){#
+#
+			c<-paste(iCountry, credittype, sep="_")#
+			try(credit2gdp <- data[,c], silent=TRUE)#
+			}		#
+		if(credittype=="nbpa"){#
+			g<-paste(iCountry, "apa", sep="_")#
+			h<-paste(iCountry, "bpa", sep="_")#
+			credit1=NULL#
+			credit2=NULL#
+			try(credit1<-data[,g], silent=TRUE)#
+			try(credit2<-data[,h], silent=TRUE)#
+		#knowingfully misnaming credit to credit2gdp#
+			if (!is.null(credit1) & !is.null(credit2)){		#
+			credit2gdp<- credit1-credit2#
+			}#
+			}			#
+#Transform rgdp, strate, defl, rrpi data		#
+	rgdp <- log(data[,a]/data[,b]/100)#
+	strate <- 100*data[,d]#
+	defl <- log(data[,b])#
+	rrpi<-log(data[,f])#
+	ffr<- data[, "us_ffr"]#
+#
+#If country has credit series data, concatenate the transformed data	#
+	if(!is.null(credit2gdp)){#
+	credit2gdp=log(credit2gdp/data[,a])#
+	datay <- cbind(defl, rgdp, credit2gdp, rrpi, strate)#
+	#Time set the data#
+	datay <- ts(datay, start=c(1955,1), freq=4)#
+	#Only take obs for which there exists obs for all variables#
+	datay <-trimts(datay)#
+#If desired, truncate the data #
+	if (!is.null(begin)){#
+	datay = window(datay, start=begin)#
+						}	#
+	if (!is.null(terminate)){#
+		datay = window(datay, end=terminate)#
+						}#
+#Country#
+	Countrylst[i]=iCountry#
+nSecondaryBrks=length(SecondaryBrk)#
+for (j in 1:(nSecondaryBrks-1)){#
+datay0=NULL#
+datay0=window(datay, begin=SecondaryBrk[j], end=SecondaryBrk[j+1])				#
+Y[[(i-1)*(nSecondaryBrks-1)+j]]=datay0#
+dlength[[(i-1)*(nSecondaryBrks-1)+j]]=dim(datay0)[1]#
+Startdates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[1]#
+Enddates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[2]#
+#
+}#
+}#
+}#
+####
+#Prep Countrylst #
+####
+Countrylst=na.omit(Countrylst)#
+###
+#Prep Dlength #
+####
+dlength=na.omit(dlength)#
+nCountries=length(dlength)#
+#
+###
+#Prep Y Matrix#
+####
+#
+Y<-do.call("rbind", Y)#
+Y=ts(Y, start=1, frequency=1)#
+Tlength=dim(Y)[1]#
+#
+###
+#Prep X Matrix#
+####
+ X <- matrix(0,Tlength, nCountries)#
+ start <- 0#
+for (ic in 1:(nCountries)) {#
+	X[(start + 1:dlength[ic]), ic] <- 1#
+	start <- start + dlength[ic]#
+	}#
+####
+#Prep Tsigbrk#
+####
+dlength=dlength[1:(nCountries-1)]#
+Tsigbrk <- cumsum(dlength)#
+#
+Startdates=unlist(Startdates)#
+names(Startdates)=Countrylst#
+#
+Enddates=unlist(Enddates)#
+names(Enddates)=Countrylst#
+#
+return(list(Y=Y,X=X, Tsigbrk=Tsigbrk, countries=Countrylst, dlength=dlength, Start=Startdates,End=Enddates, SecondaryBrk=SecondaryBrk))#
+}#
+#
+#################################
+#Execute
+tvvData_noffr2(data, countrieslongtimeseries)
+red1=tvvData_noffr2(data, countrieslongtimeseries)
+red1$Y
+red1$Tsigbrk
+red1$dlength
+#################################
+#Function#
+#################################
+#
+tvvData_noffr2<-function(data, countries, SecondaryBrk=c(0, 1989.75, 2008.5, 2011.25, 2014), begin=NULL, terminate=NULL, credittype="apa", powerof=1){#
+	#function: #
+		#stacks country data (log defl, log rgdp, short term rate, log credit2gdp, log real, property prices) to use in plutusTvv.., and converts data into an annual time series that begins with year 1#
+	#data: spreadsheet of current price gdp (country abbrev_gdp), gdp deflator (country abbrev_defl), private credit (country abbrev_credittype), rate (country abbrev_rate), real residential prices (rp_country abbrev)#
+	#countries: vector of country abbreviation.#
+	#credittype: BIS credit series ("nbpa", "aha", "ahu", "ana", "apa", "apu", "bpa", "bpu")#
+	#power of: change if you want to estimate a nonlinear model for credit2gdp. Default is 1#
+	#output: list#
+		#Y: T x nvar dependent variable data matrix. #
+		#X: T x nx exogenous variable data matrix. This is the country dummy matrix#
+		#Tsigbrks: "structural breaks", which for us is the last observation date for a country#
+		#countries: countries (omits countries that didn't have the credit series desired)#
+		#dlength: length of series by country#
+		#Start: start date of a country's series#
+		#End: enddate of a country's series#
+#
+####
+#Prepare the data#
+####
+nCountries=length(countries)#
+#
+####
+#Lists#
+####
+Countrylst=array()#
+Y<-list()#
+Xffr<-list()#
+Startdates=list()#
+Enddates=list()#
+dlength=vector("numeric")#
+for (i in 1:nCountries){#
+#
+	iCountry=countries[i]#
+	a<- paste(iCountry, "gdp", sep="_")#
+	b<- paste(iCountry, "defl", sep="_")#
+	d<- paste(iCountry, "rate", sep="_")#
+	f<- paste("rp", iCountry, sep="_")#
+#
+#Credit2GDP data	#
+	credit2gdp=NULL#
+		if(!credittype=="nbpa"){#
+#
+			c<-paste(iCountry, credittype, sep="_")#
+			try(credit2gdp <- data[,c], silent=TRUE)#
+			}		#
+		if(credittype=="nbpa"){#
+			g<-paste(iCountry, "apa", sep="_")#
+			h<-paste(iCountry, "bpa", sep="_")#
+			credit1=NULL#
+			credit2=NULL#
+			try(credit1<-data[,g], silent=TRUE)#
+			try(credit2<-data[,h], silent=TRUE)#
+		#knowingfully misnaming credit to credit2gdp#
+			if (!is.null(credit1) & !is.null(credit2)){		#
+			credit2gdp<- credit1-credit2#
+			}#
+			}			#
+#Transform rgdp, strate, defl, rrpi data		#
+	rgdp <- log(data[,a]/data[,b]/100)#
+	strate <- 100*data[,d]#
+	defl <- log(data[,b])#
+	rrpi<-log(data[,f])#
+	ffr<- data[, "us_ffr"]#
+#
+#If country has credit series data, concatenate the transformed data	#
+	if(!is.null(credit2gdp)){#
+	credit2gdp=log(credit2gdp/data[,a])#
+	datay <- cbind(defl, rgdp, credit2gdp, rrpi, strate)#
+	#Time set the data#
+	datay <- ts(datay, start=c(1955,1), freq=4)#
+	#Only take obs for which there exists obs for all variables#
+	datay <-trimts(datay)#
+#If desired, truncate the data #
+	if (!is.null(begin)){#
+	datay = window(datay, start=begin)#
+						}	#
+	if (!is.null(terminate)){#
+		datay = window(datay, end=terminate)#
+						}#
+#Country#
+nSecondaryBrks=length(SecondaryBrk)#
+for (j in 1:(nSecondaryBrks-1)){#
+datay0=NULL#
+datay0=window(datay, begin=SecondaryBrk[j], end=SecondaryBrk[j+1])				#
+Y[[(i-1)*(nSecondaryBrks-1)+j]]=datay0#
+dlength[[(i-1)*(nSecondaryBrks-1)+j]]=dim(datay0)[1]#
+Startdates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[1]#
+Enddates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[2]#
+#
+Countrylst[[(i-1)*(nSecondaryBrks+1)+j]]=paste(iCountry, j, sep="_")#
+}#
+}#
+}#
+####
+#Prep Countrylst #
+####
+Countrylst=na.omit(Countrylst)#
+###
+#Prep Dlength #
+####
+dlength=na.omit(dlength)#
+nCountries=length(dlength)#
+#
+###
+#Prep Y Matrix#
+####
+#
+Y<-do.call("rbind", Y)#
+Y=ts(Y, start=1, frequency=1)#
+Tlength=dim(Y)[1]#
+#
+###
+#Prep X Matrix#
+####
+ X <- matrix(0,Tlength, nCountries)#
+ start <- 0#
+for (ic in 1:(nCountries)) {#
+	X[(start + 1:dlength[ic]), ic] <- 1#
+	start <- start + dlength[ic]#
+	}#
+####
+#Prep Tsigbrk#
+####
+dlength=dlength[1:(nCountries-1)]#
+Tsigbrk <- cumsum(dlength)#
+#
+Startdates=unlist(Startdates)#
+names(Startdates)=Countrylst#
+#
+Enddates=unlist(Enddates)#
+names(Enddates)=Countrylst#
+#
+return(list(Y=Y,X=X, Tsigbrk=Tsigbrk, countries=Countrylst, dlength=dlength, Start=Startdates,End=Enddates, SecondaryBrk=SecondaryBrk))#
+}#
+#
+#################################
+#Execute
+red1=tvvData_noffr2(data, countrieslongtimeseries)
+str(red1)
+red1$countries
+#################################
+#Function#
+#################################
+#
+tvvData_noffr2<-function(data, countries, SecondaryBrk=c(0, 1989.75, 2008.5, 2010.5, 2014), begin=NULL, terminate=NULL, credittype="apa", powerof=1){#
+	#function: #
+		#stacks country data (log defl, log rgdp, short term rate, log credit2gdp, log real, property prices) to use in plutusTvv.., and converts data into an annual time series that begins with year 1#
+	#data: spreadsheet of current price gdp (country abbrev_gdp), gdp deflator (country abbrev_defl), private credit (country abbrev_credittype), rate (country abbrev_rate), real residential prices (rp_country abbrev)#
+	#countries: vector of country abbreviation.#
+	#credittype: BIS credit series ("nbpa", "aha", "ahu", "ana", "apa", "apu", "bpa", "bpu")#
+	#power of: change if you want to estimate a nonlinear model for credit2gdp. Default is 1#
+	#output: list#
+		#Y: T x nvar dependent variable data matrix. #
+		#X: T x nx exogenous variable data matrix. This is the country dummy matrix#
+		#Tsigbrks: "structural breaks", which for us is the last observation date for a country#
+		#countries: countries (omits countries that didn't have the credit series desired)#
+		#dlength: length of series by country#
+		#Start: start date of a country's series#
+		#End: enddate of a country's series#
+#
+####
+#Prepare the data#
+####
+nCountries=length(countries)#
+#
+####
+#Lists#
+####
+Countrylst=array()#
+Y<-list()#
+Xffr<-list()#
+Startdates=list()#
+Enddates=list()#
+dlength=vector("numeric")#
+for (i in 1:nCountries){#
+#
+	iCountry=countries[i]#
+	a<- paste(iCountry, "gdp", sep="_")#
+	b<- paste(iCountry, "defl", sep="_")#
+	d<- paste(iCountry, "rate", sep="_")#
+	f<- paste("rp", iCountry, sep="_")#
+#
+#Credit2GDP data	#
+	credit2gdp=NULL#
+		if(!credittype=="nbpa"){#
+#
+			c<-paste(iCountry, credittype, sep="_")#
+			try(credit2gdp <- data[,c], silent=TRUE)#
+			}		#
+		if(credittype=="nbpa"){#
+			g<-paste(iCountry, "apa", sep="_")#
+			h<-paste(iCountry, "bpa", sep="_")#
+			credit1=NULL#
+			credit2=NULL#
+			try(credit1<-data[,g], silent=TRUE)#
+			try(credit2<-data[,h], silent=TRUE)#
+		#knowingfully misnaming credit to credit2gdp#
+			if (!is.null(credit1) & !is.null(credit2)){		#
+			credit2gdp<- credit1-credit2#
+			}#
+			}			#
+#Transform rgdp, strate, defl, rrpi data		#
+	rgdp <- log(data[,a]/data[,b]/100)#
+	strate <- 100*data[,d]#
+	defl <- log(data[,b])#
+	rrpi<-log(data[,f])#
+	ffr<- data[, "us_ffr"]#
+#
+#If country has credit series data, concatenate the transformed data	#
+	if(!is.null(credit2gdp)){#
+	credit2gdp=log(credit2gdp/data[,a])#
+	datay <- cbind(defl, rgdp, credit2gdp, rrpi, strate)#
+	#Time set the data#
+	datay <- ts(datay, start=c(1955,1), freq=4)#
+	#Only take obs for which there exists obs for all variables#
+	datay <-trimts(datay)#
+#If desired, truncate the data #
+	if (!is.null(begin)){#
+	datay = window(datay, start=begin)#
+						}	#
+	if (!is.null(terminate)){#
+		datay = window(datay, end=terminate)#
+						}#
+#Country#
+nSecondaryBrks=length(SecondaryBrk)#
+for (j in 1:(nSecondaryBrks-1)){#
+datay0=NULL#
+datay0=window(datay, begin=SecondaryBrk[j], end=SecondaryBrk[j+1])				#
+Y[[(i-1)*(nSecondaryBrks-1)+j]]=datay0#
+dlength[[(i-1)*(nSecondaryBrks-1)+j]]=dim(datay0)[1]#
+Startdates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[1]#
+Enddates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[2]#
+#
+Countrylst[[(i-1)*(nSecondaryBrks+1)+j]]=paste(iCountry, j, sep="_")#
+}#
+}#
+}#
+####
+#Prep Countrylst #
+####
+Countrylst=na.omit(Countrylst)#
+###
+#Prep Dlength #
+####
+dlength=na.omit(dlength)#
+nCountries=length(dlength)#
+#
+###
+#Prep Y Matrix#
+####
+#
+Y<-do.call("rbind", Y)#
+Y=ts(Y, start=1, frequency=1)#
+Tlength=dim(Y)[1]#
+#
+###
+#Prep X Matrix#
+####
+ X <- matrix(0,Tlength, nCountries)#
+ start <- 0#
+for (ic in 1:(nCountries)) {#
+	X[(start + 1:dlength[ic]), ic] <- 1#
+	start <- start + dlength[ic]#
+	}#
+####
+#Prep Tsigbrk#
+####
+dlength=dlength[1:(nCountries-1)]#
+Tsigbrk <- cumsum(dlength)#
+#
+Startdates=unlist(Startdates)#
+names(Startdates)=Countrylst#
+#
+Enddates=unlist(Enddates)#
+names(Enddates)=Countrylst#
+#
+return(list(Y=Y,X=X, Tsigbrk=Tsigbrk, countries=Countrylst, dlength=dlength, Start=Startdates,End=Enddates, SecondaryBrk=SecondaryBrk))#
+}#
+#
+#################################
+#Execute
+red1=tvvData_noffr2(data, countrieslongtimeseries)
+#################################
+#Function#
+#################################
+#
+tvvData_noffr2<-function(data, countries, SecondaryBrk=c(0, 1989.75, 2006.5, 2010.5, 2014), begin=NULL, terminate=NULL, credittype="apa", powerof=1){#
+	#function: #
+		#stacks country data (log defl, log rgdp, short term rate, log credit2gdp, log real, property prices) to use in plutusTvv.., and converts data into an annual time series that begins with year 1#
+	#data: spreadsheet of current price gdp (country abbrev_gdp), gdp deflator (country abbrev_defl), private credit (country abbrev_credittype), rate (country abbrev_rate), real residential prices (rp_country abbrev)#
+	#countries: vector of country abbreviation.#
+	#credittype: BIS credit series ("nbpa", "aha", "ahu", "ana", "apa", "apu", "bpa", "bpu")#
+	#power of: change if you want to estimate a nonlinear model for credit2gdp. Default is 1#
+	#output: list#
+		#Y: T x nvar dependent variable data matrix. #
+		#X: T x nx exogenous variable data matrix. This is the country dummy matrix#
+		#Tsigbrks: "structural breaks", which for us is the last observation date for a country#
+		#countries: countries (omits countries that didn't have the credit series desired)#
+		#dlength: length of series by country#
+		#Start: start date of a country's series#
+		#End: enddate of a country's series#
+#
+####
+#Prepare the data#
+####
+nCountries=length(countries)#
+#
+####
+#Lists#
+####
+Countrylst=array()#
+Y<-list()#
+Xffr<-list()#
+Startdates=list()#
+Enddates=list()#
+dlength=vector("numeric")#
+for (i in 1:nCountries){#
+#
+	iCountry=countries[i]#
+	a<- paste(iCountry, "gdp", sep="_")#
+	b<- paste(iCountry, "defl", sep="_")#
+	d<- paste(iCountry, "rate", sep="_")#
+	f<- paste("rp", iCountry, sep="_")#
+#
+#Credit2GDP data	#
+	credit2gdp=NULL#
+		if(!credittype=="nbpa"){#
+#
+			c<-paste(iCountry, credittype, sep="_")#
+			try(credit2gdp <- data[,c], silent=TRUE)#
+			}		#
+		if(credittype=="nbpa"){#
+			g<-paste(iCountry, "apa", sep="_")#
+			h<-paste(iCountry, "bpa", sep="_")#
+			credit1=NULL#
+			credit2=NULL#
+			try(credit1<-data[,g], silent=TRUE)#
+			try(credit2<-data[,h], silent=TRUE)#
+		#knowingfully misnaming credit to credit2gdp#
+			if (!is.null(credit1) & !is.null(credit2)){		#
+			credit2gdp<- credit1-credit2#
+			}#
+			}			#
+#Transform rgdp, strate, defl, rrpi data		#
+	rgdp <- log(data[,a]/data[,b]/100)#
+	strate <- 100*data[,d]#
+	defl <- log(data[,b])#
+	rrpi<-log(data[,f])#
+	ffr<- data[, "us_ffr"]#
+#
+#If country has credit series data, concatenate the transformed data	#
+	if(!is.null(credit2gdp)){#
+	credit2gdp=log(credit2gdp/data[,a])#
+	datay <- cbind(defl, rgdp, credit2gdp, rrpi, strate)#
+	#Time set the data#
+	datay <- ts(datay, start=c(1955,1), freq=4)#
+	#Only take obs for which there exists obs for all variables#
+	datay <-trimts(datay)#
+#If desired, truncate the data #
+	if (!is.null(begin)){#
+	datay = window(datay, start=begin)#
+						}	#
+	if (!is.null(terminate)){#
+		datay = window(datay, end=terminate)#
+						}#
+#Country#
+nSecondaryBrks=length(SecondaryBrk)#
+for (j in 1:(nSecondaryBrks-1)){#
+datay0=NULL#
+datay0=window(datay, begin=SecondaryBrk[j], end=SecondaryBrk[j+1])				#
+Y[[(i-1)*(nSecondaryBrks-1)+j]]=datay0#
+dlength[[(i-1)*(nSecondaryBrks-1)+j]]=dim(datay0)[1]#
+Startdates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[1]#
+Enddates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[2]#
+#
+Countrylst[[(i-1)*(nSecondaryBrks+1)+j]]=paste(iCountry, j, sep="_")#
+}#
+}#
+}#
+####
+#Prep Countrylst #
+####
+Countrylst=na.omit(Countrylst)#
+###
+#Prep Dlength #
+####
+dlength=na.omit(dlength)#
+nCountries=length(dlength)#
+#
+###
+#Prep Y Matrix#
+####
+#
+Y<-do.call("rbind", Y)#
+Y=ts(Y, start=1, frequency=1)#
+Tlength=dim(Y)[1]#
+#
+###
+#Prep X Matrix#
+####
+ X <- matrix(0,Tlength, nCountries)#
+ start <- 0#
+for (ic in 1:(nCountries)) {#
+	X[(start + 1:dlength[ic]), ic] <- 1#
+	start <- start + dlength[ic]#
+	}#
+####
+#Prep Tsigbrk#
+####
+dlength=dlength[1:(nCountries-1)]#
+Tsigbrk <- cumsum(dlength)#
+#
+Startdates=unlist(Startdates)#
+names(Startdates)=Countrylst#
+#
+Enddates=unlist(Enddates)#
+names(Enddates)=Countrylst#
+#
+return(list(Y=Y,X=X, Tsigbrk=Tsigbrk, countries=Countrylst, dlength=dlength, Start=Startdates,End=Enddates, SecondaryBrk=SecondaryBrk))#
+}#
+#
+#################################
+#Execute
+#################################
+#Function#
+#################################
+#
+tvvData_noffr2<-function(data, countries, SecondaryBrk=c(0, 1989.75, 2006.25, 2010.25, 2014), begin=NULL, terminate=NULL, credittype="apa", powerof=1){#
+	#function: #
+		#stacks country data (log defl, log rgdp, short term rate, log credit2gdp, log real, property prices) to use in plutusTvv.., and converts data into an annual time series that begins with year 1#
+	#data: spreadsheet of current price gdp (country abbrev_gdp), gdp deflator (country abbrev_defl), private credit (country abbrev_credittype), rate (country abbrev_rate), real residential prices (rp_country abbrev)#
+	#countries: vector of country abbreviation.#
+	#credittype: BIS credit series ("nbpa", "aha", "ahu", "ana", "apa", "apu", "bpa", "bpu")#
+	#power of: change if you want to estimate a nonlinear model for credit2gdp. Default is 1#
+	#output: list#
+		#Y: T x nvar dependent variable data matrix. #
+		#X: T x nx exogenous variable data matrix. This is the country dummy matrix#
+		#Tsigbrks: "structural breaks", which for us is the last observation date for a country#
+		#countries: countries (omits countries that didn't have the credit series desired)#
+		#dlength: length of series by country#
+		#Start: start date of a country's series#
+		#End: enddate of a country's series#
+#
+####
+#Prepare the data#
+####
+nCountries=length(countries)#
+#
+####
+#Lists#
+####
+Countrylst=array()#
+Y<-list()#
+Xffr<-list()#
+Startdates=list()#
+Enddates=list()#
+dlength=vector("numeric")#
+for (i in 1:nCountries){#
+#
+	iCountry=countries[i]#
+	a<- paste(iCountry, "gdp", sep="_")#
+	b<- paste(iCountry, "defl", sep="_")#
+	d<- paste(iCountry, "rate", sep="_")#
+	f<- paste("rp", iCountry, sep="_")#
+#
+#Credit2GDP data	#
+	credit2gdp=NULL#
+		if(!credittype=="nbpa"){#
+#
+			c<-paste(iCountry, credittype, sep="_")#
+			try(credit2gdp <- data[,c], silent=TRUE)#
+			}		#
+		if(credittype=="nbpa"){#
+			g<-paste(iCountry, "apa", sep="_")#
+			h<-paste(iCountry, "bpa", sep="_")#
+			credit1=NULL#
+			credit2=NULL#
+			try(credit1<-data[,g], silent=TRUE)#
+			try(credit2<-data[,h], silent=TRUE)#
+		#knowingfully misnaming credit to credit2gdp#
+			if (!is.null(credit1) & !is.null(credit2)){		#
+			credit2gdp<- credit1-credit2#
+			}#
+			}			#
+#Transform rgdp, strate, defl, rrpi data		#
+	rgdp <- log(data[,a]/data[,b]/100)#
+	strate <- 100*data[,d]#
+	defl <- log(data[,b])#
+	rrpi<-log(data[,f])#
+	ffr<- data[, "us_ffr"]#
+#
+#If country has credit series data, concatenate the transformed data	#
+	if(!is.null(credit2gdp)){#
+	credit2gdp=log(credit2gdp/data[,a])#
+	datay <- cbind(defl, rgdp, credit2gdp, rrpi, strate)#
+	#Time set the data#
+	datay <- ts(datay, start=c(1955,1), freq=4)#
+	#Only take obs for which there exists obs for all variables#
+	datay <-trimts(datay)#
+#If desired, truncate the data #
+	if (!is.null(begin)){#
+	datay = window(datay, start=begin)#
+						}	#
+	if (!is.null(terminate)){#
+		datay = window(datay, end=terminate)#
+						}#
+#Country#
+nSecondaryBrks=length(SecondaryBrk)#
+for (j in 1:(nSecondaryBrks-1)){#
+datay0=NULL#
+datay0=window(datay, begin=SecondaryBrk[j], end=SecondaryBrk[j+1])				#
+Y[[(i-1)*(nSecondaryBrks-1)+j]]=datay0#
+dlength[[(i-1)*(nSecondaryBrks-1)+j]]=dim(datay0)[1]#
+Startdates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[1]#
+Enddates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[2]#
+#
+Countrylst[[(i-1)*(nSecondaryBrks+1)+j]]=paste(iCountry, j, sep="_")#
+}#
+}#
+}#
+####
+#Prep Countrylst #
+####
+Countrylst=na.omit(Countrylst)#
+###
+#Prep Dlength #
+####
+dlength=na.omit(dlength)#
+nCountries=length(dlength)#
+#
+###
+#Prep Y Matrix#
+####
+#
+Y<-do.call("rbind", Y)#
+Y=ts(Y, start=1, frequency=1)#
+Tlength=dim(Y)[1]#
+#
+###
+#Prep X Matrix#
+####
+ X <- matrix(0,Tlength, nCountries)#
+ start <- 0#
+for (ic in 1:(nCountries)) {#
+	X[(start + 1:dlength[ic]), ic] <- 1#
+	start <- start + dlength[ic]#
+	}#
+####
+#Prep Tsigbrk#
+####
+dlength=dlength[1:(nCountries-1)]#
+Tsigbrk <- cumsum(dlength)#
+#
+Startdates=unlist(Startdates)#
+names(Startdates)=Countrylst#
+#
+Enddates=unlist(Enddates)#
+names(Enddates)=Countrylst#
+#
+return(list(Y=Y,X=X, Tsigbrk=Tsigbrk, countries=Countrylst, dlength=dlength, Start=Startdates,End=Enddates, SecondaryBrk=SecondaryBrk))#
+}#
+#
+#################################
+#Execute
+Y
+tsp(Y)
+Y
+tsp(Y)
+tsp(datay0)
+datay0
+tsp(datay0)
+#################################
+#Function#
+#################################
+#
+tvvData_noffr2<-function(data, countries, SecondaryBrk=c(0, 1989.75, 2006, 2010, 2014), begin=NULL, terminate=NULL, credittype="apa", powerof=1){#
+	#function: #
+		#stacks country data (log defl, log rgdp, short term rate, log credit2gdp, log real, property prices) to use in plutusTvv.., and converts data into an annual time series that begins with year 1#
+	#data: spreadsheet of current price gdp (country abbrev_gdp), gdp deflator (country abbrev_defl), private credit (country abbrev_credittype), rate (country abbrev_rate), real residential prices (rp_country abbrev)#
+	#countries: vector of country abbreviation.#
+	#credittype: BIS credit series ("nbpa", "aha", "ahu", "ana", "apa", "apu", "bpa", "bpu")#
+	#power of: change if you want to estimate a nonlinear model for credit2gdp. Default is 1#
+	#output: list#
+		#Y: T x nvar dependent variable data matrix. #
+		#X: T x nx exogenous variable data matrix. This is the country dummy matrix#
+		#Tsigbrks: "structural breaks", which for us is the last observation date for a country#
+		#countries: countries (omits countries that didn't have the credit series desired)#
+		#dlength: length of series by country#
+		#Start: start date of a country's series#
+		#End: enddate of a country's series#
+#
+####
+#Prepare the data#
+####
+nCountries=length(countries)#
+#
+####
+#Lists#
+####
+Countrylst=array()#
+Y<-list()#
+Xffr<-list()#
+Startdates=list()#
+Enddates=list()#
+dlength=vector("numeric")#
+for (i in 1:nCountries){#
+#
+	iCountry=countries[i]#
+	a<- paste(iCountry, "gdp", sep="_")#
+	b<- paste(iCountry, "defl", sep="_")#
+	d<- paste(iCountry, "rate", sep="_")#
+	f<- paste("rp", iCountry, sep="_")#
+#
+#Credit2GDP data	#
+	credit2gdp=NULL#
+		if(!credittype=="nbpa"){#
+#
+			c<-paste(iCountry, credittype, sep="_")#
+			try(credit2gdp <- data[,c], silent=TRUE)#
+			}		#
+		if(credittype=="nbpa"){#
+			g<-paste(iCountry, "apa", sep="_")#
+			h<-paste(iCountry, "bpa", sep="_")#
+			credit1=NULL#
+			credit2=NULL#
+			try(credit1<-data[,g], silent=TRUE)#
+			try(credit2<-data[,h], silent=TRUE)#
+		#knowingfully misnaming credit to credit2gdp#
+			if (!is.null(credit1) & !is.null(credit2)){		#
+			credit2gdp<- credit1-credit2#
+			}#
+			}			#
+#Transform rgdp, strate, defl, rrpi data		#
+	rgdp <- log(data[,a]/data[,b]/100)#
+	strate <- 100*data[,d]#
+	defl <- log(data[,b])#
+	rrpi<-log(data[,f])#
+	ffr<- data[, "us_ffr"]#
+#
+#If country has credit series data, concatenate the transformed data	#
+	if(!is.null(credit2gdp)){#
+	credit2gdp=log(credit2gdp/data[,a])#
+	datay <- cbind(defl, rgdp, credit2gdp, rrpi, strate)#
+	#Time set the data#
+	datay <- ts(datay, start=c(1955,1), freq=4)#
+	#Only take obs for which there exists obs for all variables#
+	datay <-trimts(datay)#
+#If desired, truncate the data #
+	if (!is.null(begin)){#
+	datay = window(datay, start=begin)#
+						}	#
+	if (!is.null(terminate)){#
+		datay = window(datay, end=terminate)#
+						}#
+#Country#
+nSecondaryBrks=length(SecondaryBrk)#
+for (j in 1:(nSecondaryBrks-1)){#
+datay0=NULL#
+datay0=window(datay, begin=SecondaryBrk[j], end=SecondaryBrk[j+1])				#
+Y[[(i-1)*(nSecondaryBrks-1)+j]]=datay0#
+dlength[[(i-1)*(nSecondaryBrks-1)+j]]=dim(datay0)[1]#
+Startdates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[1]#
+Enddates[[(i-1)*(nSecondaryBrks+1)+j]]=tsp(datay0)[2]#
+#
+Countrylst[[(i-1)*(nSecondaryBrks+1)+j]]=paste(iCountry, j, sep="_")#
+}#
+}#
+}#
+####
+#Prep Countrylst #
+####
+Countrylst=na.omit(Countrylst)#
+###
+#Prep Dlength #
+####
+dlength=na.omit(dlength)#
+nCountries=length(dlength)#
+#
+###
+#Prep Y Matrix#
+####
+#
+Y<-do.call("rbind", Y)#
+Y=ts(Y, start=1, frequency=1)#
+Tlength=dim(Y)[1]#
+#
+###
+#Prep X Matrix#
+####
+ X <- matrix(0,Tlength, nCountries)#
+ start <- 0#
+for (ic in 1:(nCountries)) {#
+	X[(start + 1:dlength[ic]), ic] <- 1#
+	start <- start + dlength[ic]#
+	}#
+####
+#Prep Tsigbrk#
+####
+dlength=dlength[1:(nCountries-1)]#
+Tsigbrk <- cumsum(dlength)#
+#
+Startdates=unlist(Startdates)#
+names(Startdates)=Countrylst#
+#
+Enddates=unlist(Enddates)#
+names(Enddates)=Countrylst#
+#
+return(list(Y=Y,X=X, Tsigbrk=Tsigbrk, countries=Countrylst, dlength=dlength, Start=Startdates,End=Enddates, SecondaryBrk=SecondaryBrk))#
+}#
+#
+#################################
+#Execute
+countrieslongtimeseries=c("aus","che", "can","uk","us", "za")#
+listData=tvvData_noffr2(data, countrieslongtimeseries, begin=NULL, terminate=NULL)#
+results5e=plutusTvv3(listData, H1=10^-3, H2=10^-4, seedA=NULL)
+countrieslongtimeseries=c("aus","che", "can","uk","us", "za")#
+listData=tvvData_noffr2(data, countrieslongtimeseries, begin=NULL, terminate=NULL)#
+results5e=plutusTvv3(listData, H1=10^-4, H2=10^-5, seedA=NULL)
+countrieslongtimeseries=c("aus","che", "can","uk","us", "za")#
+listData=tvvData_noffr2(data, countrieslongtimeseries, begin=NULL, terminate=NULL)#
+results5e=plutusTvv3(listData, H1=10^-6, H2=10^-7, seedA=NULL)

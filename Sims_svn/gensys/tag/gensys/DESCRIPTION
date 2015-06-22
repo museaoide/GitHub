@@ -1,0 +1,14 @@
+Package: gensys
+Title: Solves multivariate linear rational expectations models
+Version: 0.0.0.9000
+Authors@R: person("Christopher", "Sims", , "sims@princeton.edu", 
+		  role = c("aut","cre"))
+Description: Finds unstable and stable roots, imposes restrictions to suppress
+  the unstable ones.  Checks whether the restrictions are consistent with the
+  free expectational error terms (existence) and whether all the expectational
+  error terms are determined (uniqueness).  Also reads in a nonlinear equation 
+  system given as R expressions, to form an eqsys object, automatically 
+  differentiates it.
+Depends: R (>= 3.0)
+License: GPL (>=2.0)
+LazyData: true

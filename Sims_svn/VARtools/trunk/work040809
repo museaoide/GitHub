@@ -1,0 +1,2016 @@
+
+R : Copyright 2004, The R Foundation for Statistical Computing
+Version 1.9.0  (2004-04-12), ISBN 3-900051-00-3
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for a HTML browser interface to help.
+Type 'q()' to quit R.
+
+	UTF-8 locales are not currently supported
+
+[Previously saved workspace restored]
+
+> options(STERM='iESS', editor='emacsclient')
+> ls()
+ [1] "a"            "a0"           "alphapi1"     "alphapi2"     "alphay"      
+ [6] "awmdata"      "b"            "betar"        "betay1"       "betay2"      
+[11] "bev"          "C"            "dl"           "eG1"          "fac14"       
+[16] "g0"           "g0R"          "g1"           "gensys"       "gpi"         
+[21] "gs"           "gy"           "l"            "last.warning" "ms"          
+[26] "mupi"         "muy"          "Pi"           "Psi"          "qz"          
+[31] "qzd"          "qzdiv"        "qzl"          "qzout"        "qz.out"      
+[36] "qzs"          "qzsout"       "qzswitch"     "roL"          "roS"         
+[41] "roU"          "sv"           "w"            "x"            "y"           
+[46] "z"           
+> summary(awmdata)
+      cons          invest          GDP            Empl          dPGDP       
+ Min.   :1275   Min.   :1190   Min.   :1328   Min.   :1157   Min.   :0.1570  
+ 1st Qu.:1307   1st Qu.:1204   1st Qu.:1356   1st Qu.:1159   1st Qu.:0.7395  
+ Median :1323   Median :1212   Median :1372   Median :1160   Median :1.2845  
+ Mean   :1324   Mean   :1219   Mean   :1373   Mean   :1162   Mean   :1.4514  
+ 3rd Qu.:1343   3rd Qu.:1235   3rd Qu.:1392   3rd Qu.:1164   3rd Qu.:2.1865  
+ Max.   :1360   Max.   :1251   Max.   :1409   Max.   :1170   Max.   :3.3063  
+                                                             NA's   :1.0000  
+       RW        
+ Min.   : 99.46  
+ 1st Qu.:138.06  
+ Median :146.58  
+ Mean   :145.58  
+ 3rd Qu.:159.33  
+ Max.   :165.42  
+                 
+> as.list(rfvar3)
+Error in as.list(rfvar3) : Object "rfvar3" not found
+> source("rfvar3.r")
+Error in file(file, "r") : unable to open connection
+In addition: Warning message: 
+cannot open file `rfvar3.r' 
+> source("rfvar3.R")
+Error in parse(file, n, text, prompt) : syntax error on line 134
+>  
+> rfvar3 <- function(ydata=NA,lags=6,xdata=NA,breaks=NULL,lambda=5,mu=2)
++   {
++ # This algorithm goes for accuracy without worrying about memory requirements.
++ # ydata:   dependent variable data matrix
++ # xdata:   exogenous variable data matrix
++ #          Note that if either ydata or xdata has only one column, it must still have a dim vector.  In
++ #          other words it must be a Tx1 array, not a vector of length T.
++ #------------------
++ # lags:    number of lags
++ # breaks:  rows in ydata and xdata after which there is a break.  This allows for
++ #          discontinuities in the data (e.g. war years) and for the possibility of
++ #          adding dummy observations to implement a prior.  This must be a column vector.
++ #          Note that a single dummy observation becomes lags+1 rows of the data matrix,
++ #          with a break separating it from the rest of the data.  The function treats the 
++ #          first lags observations at the top and after each "break" in ydata and xdata as
++ #          initial conditions. 
++ # lambda:  weight on "co-persistence" prior dummy observations.  This expresses
++ #          belief that when data on *all* y's are stable at their initial levels, they will
++ #          tend to persist at that level.  lambda=5 is a reasonable first try.  With lambda<0,
++ #          constant term is not included in the dummy observation, so that stationary models
++ #          with means equal to initial ybar do not fit the prior mean.  With lambda>0, the prior
++ #          implies that large constants are unlikely if unit roots are present.
++ # mu:      weight on "own persistence" prior dummy observation.  Expresses belief
++ #          that when y_i has been stable at its initial level, it will tend to persist
++ #          at that level, regardless of the values of other variables.  There is
++ #          one of these for each variable.  A reasonable first guess is mu=2.
++ #      The program assumes that the first lags rows of ydata and xdata are real data, not dummies.
++ #      Dummy observations should go at the end, if any.  If pre-sample x's are not available,
++ #      repeating the initial xdata(lags+1,:) row or copying xdata(lags+1:2*lags,:) into 
++ #      xdata(1:lags,:) are reasonable subsititutes.  These values are used in forming the
++ #      persistence priors.
++ # Code written by Christopher Sims.  This version 6/15/03.
++ #[T,nvar]=size(ydata);
++ T<-dim(ydata)[1];
++ nvar<-dim(ydata)[2];
++ #nox=isempty(xdata);
++ nox<-identical(xdata,NULL)
++ {if(!nox)
++   {T2 <- dim(xdata)[1]
++    nx <- dim(xdata)[2]
++              #[T2,nx]=size(xdata);
++  }
++ else
++    {T2 <- T; nx <- 0; xdata<- matrix(0,T2,0)
++   }
++ }
++ # note that x must be same length as y, even though first part of x will not be used.
++ # This is so that the lags parameter can be changed without reshaping the xdata matrix.
++ #------------------------
++ 
++ if (!identical(T2,T))
++    {print('Mismatch of x and y data lengths');return()}
++ {if (identical(breaks,NULL))
++    nbreaks <- 0
++ else
++    nbreaks<-length(breaks)
++ }
++ breaks <- c(0,breaks,T);
++ smpl <- vector(mode="integer",length=0);
++ for (nb in 1:(nbreaks+1))
++    {smpl <- c(smpl,(breaks[nb]+lags+1):breaks[nb+1])}
++ Tsmpl <- length(smpl)
++ X <- array(0,dim=c(Tsmpl,nvar,lags))
++ for(ix in seq(along=smpl))
++     X[ix,,] <- t(ydata[smpl[ix]-(1:lags),])
++ dim(X) <- c(Tsmpl,nvar*lags)
++ X <- cbind(X, xdata[smpl,])
++ y <- ydata[smpl,]
++ # Everything now set up with input data for y=Xb+e 
++ # ------------------Form persistence dummies-------------------
++ if (!identical(lambda,0) | mu>0)
++   {ybar <- apply(as.array(ydata[1:lags,]),2,mean)
++    dim(ybar) <- c(1,dim(ydata)[2])
++    {if (!nox) 
++       {xbar <- apply(array(xdata[1:lags,],dim=c(lags,dim(xdata)[2])),2,mean)
++        dim(xbar)=c(1,dim(xdata)[2])}
++    else
++      xbar <- NULL
++   }
++    if (!identical(lambda,0))
++      {if (lambda<0)
++         {lambda <- -lambda
++          xbar <- array(0,c(1,dim(xdata)[2]))}
++       xdum <- lambda * cbind(array(rep(ybar,lags),dim=c(1,lags*length(ybar))), xbar)
++       ydum <- array(0,c(1,nvar))
++       ydum[1,] <- lambda*ybar
++       #-------- debug -----------
++       # browser()
++       y <- rbind(y,ydum)
++       X <- rbind(X,xdum)
++     }
++    if (mu>0)
++      {xdum <- cbind( array(rep(diag(as.vector(ybar)),lags),dim=c(dim(ybar)[2],dim(ybar)[2]*lags)),
++                     array(0,dim=c(nvar,dim(xdata[2]))))*mu;
++       ydum <- mu*diag(as.vector(ybar));
++       #-----------debug--------
++       #browser()
++       X <- rbind(X,xdum)
++       y <- rbind(y,ydum)
++     }
++  }
++ # [vl,d,vr]=svd(X(:,:),0);
++ vldvr <- svd(X)
++ di <- 1./vldvr$d
++ #B <- vldvr$v %*% diag(di) %*% t(vldvr$u) %*% y (line below is just more efficient)
++ B <- vldvr$v %*% (di * (t(vldvr$u) %*% y))
++ u <-  y-X %*% B;
++ xxi <-  matrix(di,nx,nx) * t(vldvr$v)
++ xxi <-  crossprod(xxi)
++ # -----------------debug-----------
++ # browser()
++ #----------------------------------
++ dim(B) <-  c(nvar*lags+nx,nvar) # rhs variables, equations
++ By <-  B[1:(nvar*lags),]
++ dim(By) <-  c(nvar,lags,nvar) # variables, lags, equations
++ By <-  aperm(By,c(3,1,2))  #equations, variables, lags to match impulsdt.m
++ {if (nox)
++    Bx <-  NULL
++ else
++   {
++    Bx <-  array(B[nvar*lags+(1:nx),],c(dim(B)[2],nx))
++    ## label all the output, if the data matrices had labels
++    dimnames(By)[1] <- dimnames(ydata)[2]
++    dimnames(By)[2] <- dimnames(ydata)[2]
++    dimnames(Bx)[1] <- dimnames(ydata)[2]
++    dimnames(Bx)[2] <- dimnames(xdata)[2]
++    dimnames(xxi)[1] <- c(dimnames(ydata)[2],dimnames(xdata)[2],recursive=TRUE)
++    dimnames(xxi)[2] <- dimnames(xxi)[1]
++ }
++ # logintlh <-  matrictint(u'*u,xxi,size(X,1)-nvar-1)-.5*nvar*(nvar+1)*log(2*pi);
++ return(list(By=By,Bx=Bx,u=u,xxi= xxi)) #var.logintlh <-  logintlh;  
++ ### Might want to create a version without the dimnames if using this in a program.
++ }
++ rfvar3 <- function(ydata=NA,lags=6,xdata=NA,breaks=NULL,lambda=5,mu=2)
++   {
++ # This algorithm goes for accuracy without worrying about memory requirements.
++ # ydata:   dependent variable data matrix
++ # xdata:   exogenous variable data matrix
++ #          Note that if either ydata or xdata has only one column, it must still have a dim vector.  In
++ #          other words it must be a Tx1 array, not a vector of length T.
++ #------------------
++ # lags:    number of lags
++ # breaks:  rows in ydata and xdata after which there is a break.  This allows for
++ #          discontinuities in the data (e.g. war years) and for the possibility of
++ #          adding dummy observations to implement a prior.  This must be a column vector.
++ #          Note that a single dummy observation becomes lags+1 rows of the data matrix,
++ #          with a break separating it from the rest of the data.  The function treats the 
++ #          first lags observations at the top and after each "break" in ydata and xdata as
++ #          initial conditions. 
++ # lambda:  weight on "co-persistence" prior dummy observations.  This expresses
++ #          belief that when data on *all* y's are stable at their initial levels, they will
++ #          tend to persist at that level.  lambda=5 is a reasonable first try.  With lambda<0,
++ #          constant term is not included in the dummy observation, so that stationary models
++ #          with means equal to initial ybar do not fit the prior mean.  With lambda>0, the prior
++ #          implies that large constants are unlikely if unit roots are present.
++ # mu:      weight on "own persistence" prior dummy observation.  Expresses belief
++ #          that when y_i has been stable at its initial level, it will tend to persist
++ #          at that level, regardless of the values of other variables.  There is
++ #          one of these for each variable.  A reasonable first guess is mu=2.
++ #      The program assumes that the first lags rows of ydata and xdata are real data, not dummies.
++ #      Dummy observations should go at the end, if any.  If pre-sample x's are not available,
++ #      repeating the initial xdata(lags+1,:) row or copying xdata(lags+1:2*lags,:) into 
++ #      xdata(1:lags,:) are reasonable subsititutes.  These values are used in forming the
++ #      persistence priors.
++ # Code written by Christopher Sims.  This version 6/15/03.
++ #[T,nvar]=size(ydata);
++ T<-dim(ydata)[1];
++ nvar<-dim(ydata)[2];
++ #nox=isempty(xdata);
++ nox<-identical(xdata,NULL)
++ {if(!nox)
++   {T2 <- dim(xdata)[1]
++    nx <- dim(xdata)[2]
++              #[T2,nx]=size(xdata);
++  }
++ else
++    {T2 <- T; nx <- 0; xdata<- matrix(0,T2,0)
++   }
++ }
++ # note that x must be same length as y, even though first part of x will not be used.
++ # This is so that the lags parameter can be changed without reshaping the xdata matrix.
++ #------------------------
++ 
++ if (!identical(T2,T))
++    {print('Mismatch of x and y data lengths');return()}
++ {if (identical(breaks,NULL))
++    nbreaks <- 0
++ else
++    nbreaks<-length(breaks)
++ }
++ breaks <- c(0,breaks,T);
++ smpl <- vector(mode="integer",length=0);
++ for (nb in 1:(nbreaks+1))
++    {smpl <- c(smpl,(breaks[nb]+lags+1):breaks[nb+1])}
++ Tsmpl <- length(smpl)
++ X <- array(0,dim=c(Tsmpl,nvar,lags))
++ for(ix in seq(along=smpl))
++     X[ix,,] <- t(ydata[smpl[ix]-(1:lags),])
++ dim(X) <- c(Tsmpl,nvar*lags)
++ X <- cbind(X, xdata[smpl,])
++ y <- ydata[smpl,]
++ # Everything now set up with input data for y=Xb+e 
++ # ------------------Form persistence dummies-------------------
++ if (!identical(lambda,0) | mu>0)
++   {ybar <- apply(as.array(ydata[1:lags,]),2,mean)
++    dim(ybar) <- c(1,dim(ydata)[2])
++    {if (!nox) 
++       {xbar <- apply(array(xdata[1:lags,],dim=c(lags,dim(xdata)[2])),2,mean)
++        dim(xbar)=c(1,dim(xdata)[2])}
++    else
++      xbar <- NULL
++   }
++    if (!identical(lambda,0))
++      {if (lambda<0)
++         {lambda <- -lambda
++          xbar <- array(0,c(1,dim(xdata)[2]))}
++       xdum <- lambda * cbind(array(rep(ybar,lags),dim=c(1,lags*length(ybar))), xbar)
++       ydum <- array(0,c(1,nvar))
++       ydum[1,] <- lambda*ybar
++       #-------- debug -----------
++       # browser()
++       y <- rbind(y,ydum)
++       X <- rbind(X,xdum)
++     }
++    if (mu>0)
++      {xdum <- cbind( array(rep(diag(as.vector(ybar)),lags),dim=c(dim(ybar)[2],dim(ybar)[2]*lags)),
++                     array(0,dim=c(nvar,dim(xdata[2]))))*mu;
++       ydum <- mu*diag(as.vector(ybar));
++       #-----------debug--------
++       #browser()
++       X <- rbind(X,xdum)
++       y <- rbind(y,ydum)
++     }
++  }
++ # [vl,d,vr]=svd(X(:,:),0);
++ vldvr <- svd(X)
++ di <- 1./vldvr$d
++ #B <- vldvr$v %*% diag(di) %*% t(vldvr$u) %*% y (line below is just more efficient)
++ B <- vldvr$v %*% (di * (t(vldvr$u) %*% y))
++ u <-  y-X %*% B;
++ xxi <-  matrix(di,nx,nx) * t(vldvr$v)
++ xxi <-  crossprod(xxi)
++ # -----------------debug-----------
++ # browser()
++ #----------------------------------
++ dim(B) <-  c(nvar*lags+nx,nvar) # rhs variables, equations
++ By <-  B[1:(nvar*lags),]
++ dim(By) <-  c(nvar,lags,nvar) # variables, lags, equations
++ By <-  aperm(By,c(3,1,2))  #equations, variables, lags to match impulsdt.m
++ {if (nox)
++    Bx <-  NULL
++ else
++   {
++    Bx <-  array(B[nvar*lags+(1:nx),],c(dim(B)[2],nx))
++    ## label all the output, if the data matrices had labels
++    dimnames(By)[1] <- dimnames(ydata)[2]
++    dimnames(By)[2] <- dimnames(ydata)[2]
++    dimnames(Bx)[1] <- dimnames(ydata)[2]
++    dimnames(Bx)[2] <- dimnames(xdata)[2]
++    dimnames(xxi)[1] <- c(dimnames(ydata)[2],dimnames(xdata)[2],recursive=TRUE)
++    dimnames(xxi)[2] <- dimnames(xxi)[1]
++ }
++ # logintlh <-  matrictint(u'*u,xxi,size(X,1)-nvar-1)-.5*nvar*(nvar+1)*log(2*pi);
++ return(list(By=By,Bx=Bx,u=u,xxi= xxi)) #var.logintlh <-  logintlh;  
++ ### Might want to create a version without the dimnames if using this in a program.
++ }
++ }}
+>  
+> rfvar3 <- function(ydata=NA,lags=6,xdata=NA,breaks=NULL,lambda=5,mu=2)
++   {
++ # This algorithm goes for accuracy without worrying about memory requirements.
++ # ydata:   dependent variable data matrix
++ # xdata:   exogenous variable data matrix
++ #          Note that if either ydata or xdata has only one column, it must still have a dim vector.  In
++ #          other words it must be a Tx1 array, not a vector of length T.
++ #------------------
++ # lags:    number of lags
++ # breaks:  rows in ydata and xdata after which there is a break.  This allows for
++ #          discontinuities in the data (e.g. war years) and for the possibility of
++ #          adding dummy observations to implement a prior.  This must be a column vector.
++ #          Note that a single dummy observation becomes lags+1 rows of the data matrix,
++ #          with a break separating it from the rest of the data.  The function treats the 
++ #          first lags observations at the top and after each "break" in ydata and xdata as
++ #          initial conditions. 
++ # lambda:  weight on "co-persistence" prior dummy observations.  This expresses
++ #          belief that when data on *all* y's are stable at their initial levels, they will
++ #          tend to persist at that level.  lambda=5 is a reasonable first try.  With lambda<0,
++ #          constant term is not included in the dummy observation, so that stationary models
++ #          with means equal to initial ybar do not fit the prior mean.  With lambda>0, the prior
++ #          implies that large constants are unlikely if unit roots are present.
++ # mu:      weight on "own persistence" prior dummy observation.  Expresses belief
++ #          that when y_i has been stable at its initial level, it will tend to persist
++ #          at that level, regardless of the values of other variables.  There is
++ #          one of these for each variable.  A reasonable first guess is mu=2.
++ #      The program assumes that the first lags rows of ydata and xdata are real data, not dummies.
++ #      Dummy observations should go at the end, if any.  If pre-sample x's are not available,
++ #      repeating the initial xdata(lags+1,:) row or copying xdata(lags+1:2*lags,:) into 
++ #      xdata(1:lags,:) are reasonable subsititutes.  These values are used in forming the
++ #      persistence priors.
++ # Code written by Christopher Sims.  This version 6/15/03.
++ #[T,nvar]=size(ydata);
++ T<-dim(ydata)[1];
++ nvar<-dim(ydata)[2];
++ #nox=isempty(xdata);
++ nox<-identical(xdata,NULL)
++ {if(!nox)
++   {T2 <- dim(xdata)[1]
++    nx <- dim(xdata)[2]
++              #[T2,nx]=size(xdata);
++  }
++ else
++    {T2 <- T; nx <- 0; xdata<- matrix(0,T2,0)
++   }
++ }
++ # note that x must be same length as y, even though first part of x will not be used.
++ # This is so that the lags parameter can be changed without reshaping the xdata matrix.
++ #------------------------
++ 
++ if (!identical(T2,T))
++    {print('Mismatch of x and y data lengths');return()}
++ {if (identical(breaks,NULL))
++    nbreaks <- 0
++ else
++    nbreaks<-length(breaks)
++ }
++ breaks <- c(0,breaks,T);
++ smpl <- vector(mode="integer",length=0);
++ for (nb in 1:(nbreaks+1))
++    {smpl <- c(smpl,(breaks[nb]+lags+1):breaks[nb+1])}
++ Tsmpl <- length(smpl)
++ X <- array(0,dim=c(Tsmpl,nvar,lags))
++ for(ix in seq(along=smpl))
++     X[ix,,] <- t(ydata[smpl[ix]-(1:lags),])
++ dim(X) <- c(Tsmpl,nvar*lags)
++ X <- cbind(X, xdata[smpl,])
++ y <- ydata[smpl,]
++ # Everything now set up with input data for y=Xb+e 
++ # ------------------Form persistence dummies-------------------
++ if (!identical(lambda,0) | mu>0)
++   {ybar <- apply(as.array(ydata[1:lags,]),2,mean)
++    dim(ybar) <- c(1,dim(ydata)[2])
++    {if (!nox) 
++       {xbar <- apply(array(xdata[1:lags,],dim=c(lags,dim(xdata)[2])),2,mean)
++        dim(xbar)=c(1,dim(xdata)[2])}
++    else
++      xbar <- NULL
++   }
++    if (!identical(lambda,0))
++      {if (lambda<0)
++         {lambda <- -lambda
++          xbar <- array(0,c(1,dim(xdata)[2]))}
++       xdum <- lambda * cbind(array(rep(ybar,lags),dim=c(1,lags*length(ybar))), xbar)
++       ydum <- array(0,c(1,nvar))
++       ydum[1,] <- lambda*ybar
++       #-------- debug -----------
++       # browser()
++       y <- rbind(y,ydum)
++       X <- rbind(X,xdum)
++     }
++    if (mu>0)
++      {xdum <- cbind( array(rep(diag(as.vector(ybar)),lags),dim=c(dim(ybar)[2],dim(ybar)[2]*lags)),
++                     array(0,dim=c(nvar,dim(xdata[2]))))*mu;
++       ydum <- mu*diag(as.vector(ybar));
++       #-----------debug--------
++       #browser()
++       X <- rbind(X,xdum)
++       y <- rbind(y,ydum)
++     }
++  }
++ # [vl,d,vr]=svd(X(:,:),0);
++ vldvr <- svd(X)
++ di <- 1./vldvr$d
++ #B <- vldvr$v %*% diag(di) %*% t(vldvr$u) %*% y (line below is just more efficient)
++ B <- vldvr$v %*% (di * (t(vldvr$u) %*% y))
++ u <-  y-X %*% B;
++ xxi <-  matrix(di,nx,nx) * t(vldvr$v)
++ xxi <-  crossprod(xxi)
++ # -----------------debug-----------
++ # browser()
++ #----------------------------------
++ dim(B) <-  c(nvar*lags+nx,nvar) # rhs variables, equations
++ By <-  B[1:(nvar*lags),]
++ dim(By) <-  c(nvar,lags,nvar) # variables, lags, equations
++ By <-  aperm(By,c(3,1,2))  #equations, variables, lags to match impulsdt.m
++ {if (nox)
++    Bx <-  NULL
++ else
++   {
++    Bx <-  array(B[nvar*lags+(1:nx),],c(dim(B)[2],nx))
++    ## label all the output, if the data matrices had labels
++    dimnames(By)[1] <- dimnames(ydata)[2]
++    dimnames(By)[2] <- dimnames(ydata)[2]
++    dimnames(Bx)[1] <- dimnames(ydata)[2]
++    dimnames(Bx)[2] <- dimnames(xdata)[2]
++    dimnames(xxi)[1] <- c(dimnames(ydata)[2],dimnames(xdata)[2],recursive=TRUE)
++    dimnames(xxi)[2] <- dimnames(xxi)[1]
++  }
++ }
++ # logintlh <-  matrictint(u'*u,xxi,size(X,1)-nvar-1)-.5*nvar*(nvar+1)*log(2*pi);
++ return(list(By=By,Bx=Bx,u=u,xxi= xxi)) #var.logintlh <-  logintlh;  
++ ### Might want to create a version without the dimnames if using this in a program.
++ }
+> 
+> 
+> list(rfvar3)
+[[1]]
+function(ydata=NA,lags=6,xdata=NA,breaks=NULL,lambda=5,mu=2)
+  {
+# This algorithm goes for accuracy without worrying about memory requirements.
+# ydata:   dependent variable data matrix
+# xdata:   exogenous variable data matrix
+#          Note that if either ydata or xdata has only one column, it must still have a dim vector.  In
+#          other words it must be a Tx1 array, not a vector of length T.
+#------------------
+# lags:    number of lags
+# breaks:  rows in ydata and xdata after which there is a break.  This allows for
+#          discontinuities in the data (e.g. war years) and for the possibility of
+#          adding dummy observations to implement a prior.  This must be a column vector.
+#          Note that a single dummy observation becomes lags+1 rows of the data matrix,
+#          with a break separating it from the rest of the data.  The function treats the 
+#          first lags observations at the top and after each "break" in ydata and xdata as
+#          initial conditions. 
+# lambda:  weight on "co-persistence" prior dummy observations.  This expresses
+#          belief that when data on *all* y's are stable at their initial levels, they will
+#          tend to persist at that level.  lambda=5 is a reasonable first try.  With lambda<0,
+#          constant term is not included in the dummy observation, so that stationary models
+#          with means equal to initial ybar do not fit the prior mean.  With lambda>0, the prior
+#          implies that large constants are unlikely if unit roots are present.
+# mu:      weight on "own persistence" prior dummy observation.  Expresses belief
+#          that when y_i has been stable at its initial level, it will tend to persist
+#          at that level, regardless of the values of other variables.  There is
+#          one of these for each variable.  A reasonable first guess is mu=2.
+#      The program assumes that the first lags rows of ydata and xdata are real data, not dummies.
+#      Dummy observations should go at the end, if any.  If pre-sample x's are not available,
+#      repeating the initial xdata(lags+1,:) row or copying xdata(lags+1:2*lags,:) into 
+#      xdata(1:lags,:) are reasonable subsititutes.  These values are used in forming the
+#      persistence priors.
+# Code written by Christopher Sims.  This version 6/15/03.
+#[T,nvar]=size(ydata);
+T<-dim(ydata)[1];
+nvar<-dim(ydata)[2];
+#nox=isempty(xdata);
+nox<-identical(xdata,NULL)
+{if(!nox)
+  {T2 <- dim(xdata)[1]
+   nx <- dim(xdata)[2]
+             #[T2,nx]=size(xdata);
+ }
+else
+   {T2 <- T; nx <- 0; xdata<- matrix(0,T2,0)
+  }
+}
+# note that x must be same length as y, even though first part of x will not be used.
+# This is so that the lags parameter can be changed without reshaping the xdata matrix.
+#------------------------
+
+if (!identical(T2,T))
+   {print('Mismatch of x and y data lengths');return()}
+{if (identical(breaks,NULL))
+   nbreaks <- 0
+else
+   nbreaks<-length(breaks)
+}
+breaks <- c(0,breaks,T);
+smpl <- vector(mode="integer",length=0);
+for (nb in 1:(nbreaks+1))
+   {smpl <- c(smpl,(breaks[nb]+lags+1):breaks[nb+1])}
+Tsmpl <- length(smpl)
+X <- array(0,dim=c(Tsmpl,nvar,lags))
+for(ix in seq(along=smpl))
+    X[ix,,] <- t(ydata[smpl[ix]-(1:lags),])
+dim(X) <- c(Tsmpl,nvar*lags)
+X <- cbind(X, xdata[smpl,])
+y <- ydata[smpl,]
+# Everything now set up with input data for y=Xb+e 
+# ------------------Form persistence dummies-------------------
+if (!identical(lambda,0) | mu>0)
+  {ybar <- apply(as.array(ydata[1:lags,]),2,mean)
+   dim(ybar) <- c(1,dim(ydata)[2])
+   {if (!nox) 
+      {xbar <- apply(array(xdata[1:lags,],dim=c(lags,dim(xdata)[2])),2,mean)
+       dim(xbar)=c(1,dim(xdata)[2])}
+   else
+     xbar <- NULL
+  }
+   if (!identical(lambda,0))
+     {if (lambda<0)
+        {lambda <- -lambda
+         xbar <- array(0,c(1,dim(xdata)[2]))}
+      xdum <- lambda * cbind(array(rep(ybar,lags),dim=c(1,lags*length(ybar))), xbar)
+      ydum <- array(0,c(1,nvar))
+      ydum[1,] <- lambda*ybar
+      #-------- debug -----------
+      # browser()
+      y <- rbind(y,ydum)
+      X <- rbind(X,xdum)
+    }
+   if (mu>0)
+     {xdum <- cbind( array(rep(diag(as.vector(ybar)),lags),dim=c(dim(ybar)[2],dim(ybar)[2]*lags)),
+                    array(0,dim=c(nvar,dim(xdata[2]))))*mu;
+      ydum <- mu*diag(as.vector(ybar));
+      #-----------debug--------
+      #browser()
+      X <- rbind(X,xdum)
+      y <- rbind(y,ydum)
+    }
+ }
+# [vl,d,vr]=svd(X(:,:),0);
+vldvr <- svd(X)
+di <- 1./vldvr$d
+#B <- vldvr$v %*% diag(di) %*% t(vldvr$u) %*% y (line below is just more efficient)
+B <- vldvr$v %*% (di * (t(vldvr$u) %*% y))
+u <-  y-X %*% B;
+xxi <-  matrix(di,nx,nx) * t(vldvr$v)
+xxi <-  crossprod(xxi)
+# -----------------debug-----------
+# browser()
+#----------------------------------
+dim(B) <-  c(nvar*lags+nx,nvar) # rhs variables, equations
+By <-  B[1:(nvar*lags),]
+dim(By) <-  c(nvar,lags,nvar) # variables, lags, equations
+By <-  aperm(By,c(3,1,2))  #equations, variables, lags to match impulsdt.m
+{if (nox)
+   Bx <-  NULL
+else
+  {
+   Bx <-  array(B[nvar*lags+(1:nx),],c(dim(B)[2],nx))
+   ## label all the output, if the data matrices had labels
+   dimnames(By)[1] <- dimnames(ydata)[2]
+   dimnames(By)[2] <- dimnames(ydata)[2]
+   dimnames(Bx)[1] <- dimnames(ydata)[2]
+   dimnames(Bx)[2] <- dimnames(xdata)[2]
+   dimnames(xxi)[1] <- c(dimnames(ydata)[2],dimnames(xdata)[2],recursive=TRUE)
+   dimnames(xxi)[2] <- dimnames(xxi)[1]
+ }
+}
+# logintlh <-  matrictint(u'*u,xxi,size(X,1)-nvar-1)-.5*nvar*(nvar+1)*log(2*pi);
+return(list(By=By,Bx=Bx,u=u,xxi= xxi)) #var.logintlh <-  logintlh;  
+### Might want to create a version without the dimnames if using this in a program.
+}
+
+> str(rfvar3)
+function (ydata = NA, lags = 6, xdata = NA, breaks = NULL, lambda = 5, 
+    mu = 2)  
+ - attr(*, "source")= chr [1:134] "function(ydata=NA,lags=6,xdata=NA,breaks=NULL,lambda=5,mu=2)" ...
+> as.list(rfvar3)
+$ydata
+[1] NA
+
+$lags
+[1] 6
+
+$xdata
+[1] NA
+
+$breaks
+NULL
+
+$lambda
+[1] 5
+
+$mu
+[1] 2
+
+[[7]]
+{
+    T <- dim(ydata)[1]
+    nvar <- dim(ydata)[2]
+    nox <- identical(xdata, NULL)
+    {
+        if (!nox) {
+            T2 <- dim(xdata)[1]
+            nx <- dim(xdata)[2]
+        }
+        else {
+            T2 <- T
+            nx <- 0
+            xdata <- matrix(0, T2, 0)
+        }
+    }
+    if (!identical(T2, T)) {
+        print("Mismatch of x and y data lengths")
+        return()
+    }
+    {
+        if (identical(breaks, NULL)) 
+            nbreaks <- 0
+        else nbreaks <- length(breaks)
+    }
+    breaks <- c(0, breaks, T)
+    smpl <- vector(mode = "integer", length = 0)
+    for (nb in 1:(nbreaks + 1)) {
+        smpl <- c(smpl, (breaks[nb] + lags + 1):breaks[nb + 1])
+    }
+    Tsmpl <- length(smpl)
+    X <- array(0, dim = c(Tsmpl, nvar, lags))
+    for (ix in seq(along = smpl)) X[ix, , ] <- t(ydata[smpl[ix] - 
+        (1:lags), ])
+    dim(X) <- c(Tsmpl, nvar * lags)
+    X <- cbind(X, xdata[smpl, ])
+    y <- ydata[smpl, ]
+    if (!identical(lambda, 0) | mu > 0) {
+        ybar <- apply(as.array(ydata[1:lags, ]), 2, mean)
+        dim(ybar) <- c(1, dim(ydata)[2])
+        {
+            if (!nox) {
+                xbar <- apply(array(xdata[1:lags, ], dim = c(lags, 
+                  dim(xdata)[2])), 2, mean)
+                dim(xbar) = c(1, dim(xdata)[2])
+            }
+            else xbar <- NULL
+        }
+        if (!identical(lambda, 0)) {
+            if (lambda < 0) {
+                lambda <- -lambda
+                xbar <- array(0, c(1, dim(xdata)[2]))
+            }
+            xdum <- lambda * cbind(array(rep(ybar, lags), dim = c(1, 
+                lags * length(ybar))), xbar)
+            ydum <- array(0, c(1, nvar))
+            ydum[1, ] <- lambda * ybar
+            y <- rbind(y, ydum)
+            X <- rbind(X, xdum)
+        }
+        if (mu > 0) {
+            xdum <- cbind(array(rep(diag(as.vector(ybar)), lags), 
+                dim = c(dim(ybar)[2], dim(ybar)[2] * lags)), 
+                array(0, dim = c(nvar, dim(xdata[2])))) * mu
+            ydum <- mu * diag(as.vector(ybar))
+            X <- rbind(X, xdum)
+            y <- rbind(y, ydum)
+        }
+    }
+    vldvr <- svd(X)
+    di <- 1/vldvr$d
+    B <- vldvr$v %*% (di * (t(vldvr$u) %*% y))
+    u <- y - X %*% B
+    xxi <- matrix(di, nx, nx) * t(vldvr$v)
+    xxi <- crossprod(xxi)
+    dim(B) <- c(nvar * lags + nx, nvar)
+    By <- B[1:(nvar * lags), ]
+    dim(By) <- c(nvar, lags, nvar)
+    By <- aperm(By, c(3, 1, 2))
+    {
+        if (nox) 
+            Bx <- NULL
+        else {
+            Bx <- array(B[nvar * lags + (1:nx), ], c(dim(B)[2], 
+                nx))
+            dimnames(By)[1] <- dimnames(ydata)[2]
+            dimnames(By)[2] <- dimnames(ydata)[2]
+            dimnames(Bx)[1] <- dimnames(ydata)[2]
+            dimnames(Bx)[2] <- dimnames(xdata)[2]
+            dimnames(xxi)[1] <- c(dimnames(ydata)[2], dimnames(xdata)[2], 
+                recursive = TRUE)
+            dimnames(xxi)[2] <- dimnames(xxi)[1]
+        }
+    }
+    return(list(By = By, Bx = Bx, u = u, xxi = xxi))
+}
+
+> str(rfvar3)
+function (ydata = NA, lags = 6, xdata = NA, breaks = NULL, lambda = 5, 
+    mu = 2)  
+ - attr(*, "source")= chr [1:134] "function(ydata=NA,lags=6,xdata=NA,breaks=NULL,lambda=5,mu=2)" ...
+
+> ls()
+ [1] "a"            "a0"           "alphapi1"     "alphapi2"     "alphay"      
+ [6] "awmdata"      "b"            "betar"        "betay1"       "betay2"      
+[11] "bev"          "C"            "dl"           "eG1"          "fac14"       
+[16] "g0"           "g0R"          "g1"           "gensys"       "gpi"         
+[21] "gs"           "gy"           "l"            "last.warning" "ms"          
+[26] "mupi"         "muy"          "Pi"           "Psi"          "qz"          
+[31] "qzd"          "qzdiv"        "qzl"          "qzout"        "qz.out"      
+[36] "qzs"          "qzsout"       "qzswitch"     "rfvar3"       "roL"         
+[41] "roS"          "roU"          "sv"           "w"            "x"           
+[46] "y"            "z"           
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Error in matrix(di, nx, nx) * t(vldvr$v) : 
+	non-conformable arrays
+> dim(awmdata)
+[1] 132   6
+>  
+> rfvar3 <- function(ydata=NA,lags=6,xdata=NA,breaks=NULL,lambda=5,mu=2)
++   {
++ # This algorithm goes for accuracy without worrying about memory requirements.
++ # ydata:   dependent variable data matrix
++ # xdata:   exogenous variable data matrix
++ #          Note that if either ydata or xdata has only one column, it must still have a dim vector.  In
++ #          other words it must be a Tx1 array, not a vector of length T.
++ #------------------
++ # lags:    number of lags
++ # breaks:  rows in ydata and xdata after which there is a break.  This allows for
++ #          discontinuities in the data (e.g. war years) and for the possibility of
++ #          adding dummy observations to implement a prior.  This must be a column vector.
++ #          Note that a single dummy observation becomes lags+1 rows of the data matrix,
++ #          with a break separating it from the rest of the data.  The function treats the 
++ #          first lags observations at the top and after each "break" in ydata and xdata as
++ #          initial conditions. 
++ # lambda:  weight on "co-persistence" prior dummy observations.  This expresses
++ #          belief that when data on *all* y's are stable at their initial levels, they will
++ #          tend to persist at that level.  lambda=5 is a reasonable first try.  With lambda<0,
++ #          constant term is not included in the dummy observation, so that stationary models
++ #          with means equal to initial ybar do not fit the prior mean.  With lambda>0, the prior
++ #          implies that large constants are unlikely if unit roots are present.
++ # mu:      weight on "own persistence" prior dummy observation.  Expresses belief
++ #          that when y_i has been stable at its initial level, it will tend to persist
++ #          at that level, regardless of the values of other variables.  There is
++ #          one of these for each variable.  A reasonable first guess is mu=2.
++ #      The program assumes that the first lags rows of ydata and xdata are real data, not dummies.
++ #      Dummy observations should go at the end, if any.  If pre-sample x's are not available,
++ #      repeating the initial xdata(lags+1,:) row or copying xdata(lags+1:2*lags,:) into 
++ #      xdata(1:lags,:) are reasonable subsititutes.  These values are used in forming the
++ #      persistence priors.
++ # Code written by Christopher Sims.  This version 6/15/03.
++ #[T,nvar]=size(ydata);
++ T<-dim(ydata)[1];
++ nvar<-dim(ydata)[2];
++ #nox=isempty(xdata);
++ nox<-identical(xdata,NULL)
++ {if(!nox)
++   {T2 <- dim(xdata)[1]
++    nx <- dim(xdata)[2]
++              #[T2,nx]=size(xdata);
++  }
++ else
++    {T2 <- T; nx <- 0; xdata<- matrix(0,T2,0)
++   }
++ }
++ # note that x must be same length as y, even though first part of x will not be used.
++ # This is so that the lags parameter can be changed without reshaping the xdata matrix.
++ #------------------------
++ 
++ if (!identical(T2,T))
++    {print('Mismatch of x and y data lengths');return()}
++ {if (identical(breaks,NULL))
++    nbreaks <- 0
++ else
++    nbreaks<-length(breaks)
++ }
++ breaks <- c(0,breaks,T);
++ smpl <- vector(mode="integer",length=0);
++ for (nb in 1:(nbreaks+1))
++    {smpl <- c(smpl,(breaks[nb]+lags+1):breaks[nb+1])}
++ Tsmpl <- length(smpl)
++ X <- array(0,dim=c(Tsmpl,nvar,lags))
++ for(ix in seq(along=smpl))
++     X[ix,,] <- t(ydata[smpl[ix]-(1:lags),])
++ dim(X) <- c(Tsmpl,nvar*lags)
++ X <- cbind(X, xdata[smpl,])
++ y <- ydata[smpl,]
++ # Everything now set up with input data for y=Xb+e 
++ # ------------------Form persistence dummies-------------------
++ if (!identical(lambda,0) | mu>0)
++   {ybar <- apply(as.array(ydata[1:lags,]),2,mean)
++    dim(ybar) <- c(1,dim(ydata)[2])
++    {if (!nox) 
++       {xbar <- apply(array(xdata[1:lags,],dim=c(lags,dim(xdata)[2])),2,mean)
++        dim(xbar)=c(1,dim(xdata)[2])}
++    else
++      xbar <- NULL
++   }
++    if (!identical(lambda,0))
++      {if (lambda<0)
++         {lambda <- -lambda
++          xbar <- array(0,c(1,dim(xdata)[2]))}
++       xdum <- lambda * cbind(array(rep(ybar,lags),dim=c(1,lags*length(ybar))), xbar)
++       ydum <- array(0,c(1,nvar))
++       ydum[1,] <- lambda*ybar
++       #-------- debug -----------
++       # browser()
++       y <- rbind(y,ydum)
++       X <- rbind(X,xdum)
++     }
++    if (mu>0)
++      {xdum <- cbind( array(rep(diag(as.vector(ybar)),lags),dim=c(dim(ybar)[2],dim(ybar)[2]*lags)),
++                     array(0,dim=c(nvar,dim(xdata[2]))))*mu;
++       ydum <- mu*diag(as.vector(ybar));
++       #-----------debug--------
++       #browser()
++       X <- rbind(X,xdum)
++       y <- rbind(y,ydum)
++     }
++  }
++ # [vl,d,vr]=svd(X(:,:),0);
++ vldvr <- svd(X)
++ di <- 1./vldvr$d
++ #B <- vldvr$v %*% diag(di) %*% t(vldvr$u) %*% y (line below is just more efficient)
++ B <- vldvr$v %*% (di * (t(vldvr$u) %*% y))
++ u <-  y-X %*% B;
++ nX <- dim(xxi)[1],
+Error: syntax error
+> xxi <-  matrix(di,nX,nX) * t(vldvr$v)
+Error in as.vector(data) : Object "di" not found
+> xxi <-  crossprod(xxi)
+Error in crossprod(xxi) : Object "xxi" not found
+> # -----------------debug-----------
+> # browser()
+> #----------------------------------
+> dim(B) <-  c(nvar*lags+nx,nvar) # rhs variables, equations
+Error: Object "nvar" not found
+> By <-  B[1:(nvar*lags),]
+Error: Object "B" not found
+> dim(By) <-  c(nvar,lags,nvar) # variables, lags, equations
+Error: Object "nvar" not found
+> By <-  aperm(By,c(3,1,2))  #equations, variables, lags to match impulsdt.m
+Error in aperm(By, c(3, 1, 2)) : Object "By" not found
+> ## label all the output, if the data matrices had labels
+> dimnames(By)[1] <- dimnames(ydata)[2]
+Error: Object "ydata" not found
+> dimnames(By)[2] <- dimnames(ydata)[2]
+Error: Object "ydata" not found
+> dimnames(xxi)[1] <- c(dimnames(ydata)[2],dimnames(xdata)[2],recursive=TRUE)
+Error: Object "ydata" not found
+> dimnames(xxi)[2] <- dimnames(xxi)[1]
+Error: Object "xxi" not found
+> {if (nox)
++    Bx <-  NULL
++ else
++   {
++    Bx <-  array(B[nvar*lags+(1:nx),],c(dim(B)[2],nx))
++    dimnames(Bx)[1] <- dimnames(ydata)[2]
++    dimnames(Bx)[2] <- dimnames(xdata)[2]
++  }
++ }
+Error: Object "nox" not found
+> # logintlh <-  matrictint(u'*u,xxi,size(X,1)-nvar-1)-.5*nvar*(nvar+1)*log(2*pi);
+> return(list(By=By,Bx=Bx,u=u,xxi= xxi)) #var.logintlh <-  logintlh;  
+Error: Object "By" not found
+> ### Might want to create a version without the dimnames if using this in a program.
+> }
+Error: syntax error
+>  
+> rfvar3 <- function(ydata=NA,lags=6,xdata=NA,breaks=NULL,lambda=5,mu=2)
++   {
++ # This algorithm goes for accuracy without worrying about memory requirements.
++ # ydata:   dependent variable data matrix
++ # xdata:   exogenous variable data matrix
++ #          Note that if either ydata or xdata has only one column, it must still have a dim vector.  In
++ #          other words it must be a Tx1 array, not a vector of length T.
++ #------------------
++ # lags:    number of lags
++ # breaks:  rows in ydata and xdata after which there is a break.  This allows for
++ #          discontinuities in the data (e.g. war years) and for the possibility of
++ #          adding dummy observations to implement a prior.  This must be a column vector.
++ #          Note that a single dummy observation becomes lags+1 rows of the data matrix,
++ #          with a break separating it from the rest of the data.  The function treats the 
++ #          first lags observations at the top and after each "break" in ydata and xdata as
++ #          initial conditions. 
++ # lambda:  weight on "co-persistence" prior dummy observations.  This expresses
++ #          belief that when data on *all* y's are stable at their initial levels, they will
++ #          tend to persist at that level.  lambda=5 is a reasonable first try.  With lambda<0,
++ #          constant term is not included in the dummy observation, so that stationary models
++ #          with means equal to initial ybar do not fit the prior mean.  With lambda>0, the prior
++ #          implies that large constants are unlikely if unit roots are present.
++ # mu:      weight on "own persistence" prior dummy observation.  Expresses belief
++ #          that when y_i has been stable at its initial level, it will tend to persist
++ #          at that level, regardless of the values of other variables.  There is
++ #          one of these for each variable.  A reasonable first guess is mu=2.
++ #      The program assumes that the first lags rows of ydata and xdata are real data, not dummies.
++ #      Dummy observations should go at the end, if any.  If pre-sample x's are not available,
++ #      repeating the initial xdata(lags+1,:) row or copying xdata(lags+1:2*lags,:) into 
++ #      xdata(1:lags,:) are reasonable subsititutes.  These values are used in forming the
++ #      persistence priors.
++ # Code written by Christopher Sims.  This version 6/15/03.
++ #[T,nvar]=size(ydata);
++ T<-dim(ydata)[1];
++ nvar<-dim(ydata)[2];
++ #nox=isempty(xdata);
++ nox <- identical(xdata,NULL)
++ {if(!nox)
++   {T2 <- dim(xdata)[1]
++    nx <- dim(xdata)[2]
++              #[T2,nx]=size(xdata);
++  }
++ else
++    {T2 <- T; nx <- 0; xdata<- matrix(0,T2,0)
++   }
++ }
++ # note that x must be same length as y, even though first part of x will not be used.
++ # This is so that the lags parameter can be changed without reshaping the xdata matrix.
++ #------------------------
++ 
++ if (!identical(T2,T))
++    {print('Mismatch of x and y data lengths');return()}
++ {if (identical(breaks,NULL))
++    nbreaks <- 0
++ else
++    nbreaks<-length(breaks)
++ }
++ breaks <- c(0,breaks,T);
++ smpl <- vector(mode="integer",length=0);
++ for (nb in 1:(nbreaks+1))
++    {smpl <- c(smpl,(breaks[nb]+lags+1):breaks[nb+1])}
++ Tsmpl <- length(smpl)
++ X <- array(0,dim=c(Tsmpl,nvar,lags))
++ for(ix in seq(along=smpl))
++     X[ix,,] <- t(ydata[smpl[ix]-(1:lags),])
++ dim(X) <- c(Tsmpl,nvar*lags)
++ X <- cbind(X, xdata[smpl,])
++ y <- ydata[smpl,]
++ # Everything now set up with input data for y=Xb+e 
++ # ------------------Form persistence dummies-------------------
++ if (!identical(lambda,0) | mu>0)
++   {ybar <- apply(as.array(ydata[1:lags,]),2,mean)
++    dim(ybar) <- c(1,dim(ydata)[2])
++    {if (!nox) 
++       {xbar <- apply(array(xdata[1:lags,],dim=c(lags,dim(xdata)[2])),2,mean)
++        dim(xbar)=c(1,dim(xdata)[2])}
++    else
++      xbar <- NULL
++   }
++    if (!identical(lambda,0))
++      {if (lambda<0)
++         {lambda <- -lambda
++          xbar <- array(0,c(1,dim(xdata)[2]))}
++       xdum <- lambda * cbind(array(rep(ybar,lags),dim=c(1,lags*length(ybar))), xbar)
++       ydum <- array(0,c(1,nvar))
++       ydum[1,] <- lambda*ybar
++       #-------- debug -----------
++       # browser()
++       y <- rbind(y,ydum)
++       X <- rbind(X,xdum)
++     }
++    if (mu>0)
++      {xdum <- cbind( array(rep(diag(as.vector(ybar)),lags),dim=c(dim(ybar)[2],dim(ybar)[2]*lags)),
++                     array(0,dim=c(nvar,dim(xdata[2]))))*mu;
++       ydum <- mu*diag(as.vector(ybar));
++       #-----------debug--------
++       #browser()
++       X <- rbind(X,xdum)
++       y <- rbind(y,ydum)
++     }
++  }
++ # [vl,d,vr]=svd(X(:,:),0);
++ vldvr <- svd(X)
++ di <- 1./vldvr$d
++ #B <- vldvr$v %*% diag(di) %*% t(vldvr$u) %*% y (line below is just more efficient)
++ B <- vldvr$v %*% (di * (t(vldvr$u) %*% y))
++ u <-  y-X %*% B;
++ nX <- dim(xxi)[1]
++ xxi <-  matrix(di,nX,nX) * t(vldvr$v)
++ xxi <-  crossprod(xxi)
++ # -----------------debug-----------
++ # browser()
++ #----------------------------------
++ dim(B) <-  c(nvar*lags+nx,nvar) # rhs variables, equations
++ By <-  B[1:(nvar*lags),]
++ dim(By) <-  c(nvar,lags,nvar) # variables, lags, equations
++ By <-  aperm(By,c(3,1,2))  #equations, variables, lags to match impulsdt.m
++ ## label all the output, if the data matrices had labels
++ dimnames(By)[1] <- dimnames(ydata)[2]
++ dimnames(By)[2] <- dimnames(ydata)[2]
++ dimnames(xxi)[1] <- c(dimnames(ydata)[2],dimnames(xdata)[2],recursive=TRUE)
++ dimnames(xxi)[2] <- dimnames(xxi)[1]
++ {if (nox)
++    Bx <-  NULL
++ else
++   {
++    Bx <-  array(B[nvar*lags+(1:nx),],c(dim(B)[2],nx))
++    dimnames(Bx)[1] <- dimnames(ydata)[2]
++    dimnames(Bx)[2] <- dimnames(xdata)[2]
++  }
++ }
++ # logintlh <-  matrictint(u'*u,xxi,size(X,1)-nvar-1)-.5*nvar*(nvar+1)*log(2*pi);
++ return(list(By=By,Bx=Bx,u=u,xxi= xxi)) #var.logintlh <-  logintlh;  
++ ### Might want to create a version without the dimnames if using this in a program.
++ }
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Error in rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1,  : 
+	Object "xxi" not found
+>  
+> rfvar3 <- function(ydata=NA,lags=6,xdata=NA,breaks=NULL,lambda=5,mu=2)
++   {
++ # This algorithm goes for accuracy without worrying about memory requirements.
++ # ydata:   dependent variable data matrix
++ # xdata:   exogenous variable data matrix
++ #          Note that if either ydata or xdata has only one column, it must still have a dim vector.  In
++ #          other words it must be a Tx1 array, not a vector of length T.
++ #------------------
++ # lags:    number of lags
++ # breaks:  rows in ydata and xdata after which there is a break.  This allows for
++ #          discontinuities in the data (e.g. war years) and for the possibility of
++ #          adding dummy observations to implement a prior.  This must be a column vector.
++ #          Note that a single dummy observation becomes lags+1 rows of the data matrix,
++ #          with a break separating it from the rest of the data.  The function treats the 
++ #          first lags observations at the top and after each "break" in ydata and xdata as
++ #          initial conditions. 
++ # lambda:  weight on "co-persistence" prior dummy observations.  This expresses
++ #          belief that when data on *all* y's are stable at their initial levels, they will
++ #          tend to persist at that level.  lambda=5 is a reasonable first try.  With lambda<0,
++ #          constant term is not included in the dummy observation, so that stationary models
++ #          with means equal to initial ybar do not fit the prior mean.  With lambda>0, the prior
++ #          implies that large constants are unlikely if unit roots are present.
++ # mu:      weight on "own persistence" prior dummy observation.  Expresses belief
++ #          that when y_i has been stable at its initial level, it will tend to persist
++ #          at that level, regardless of the values of other variables.  There is
++ #          one of these for each variable.  A reasonable first guess is mu=2.
++ #      The program assumes that the first lags rows of ydata and xdata are real data, not dummies.
++ #      Dummy observations should go at the end, if any.  If pre-sample x's are not available,
++ #      repeating the initial xdata(lags+1,:) row or copying xdata(lags+1:2*lags,:) into 
++ #      xdata(1:lags,:) are reasonable subsititutes.  These values are used in forming the
++ #      persistence priors.
++ # Code written by Christopher Sims.  This version 6/15/03.
++ #[T,nvar]=size(ydata);
++ T<-dim(ydata)[1];
++ nvar<-dim(ydata)[2];
++ #nox=isempty(xdata);
++ nox <- identical(xdata,NULL)
++ {if(!nox)
++   {T2 <- dim(xdata)[1]
++    nx <- dim(xdata)[2]
++              #[T2,nx]=size(xdata);
++  }
++ else
++    {T2 <- T; nx <- 0; xdata<- matrix(0,T2,0)
++   }
++ }
++ # note that x must be same length as y, even though first part of x will not be used.
++ # This is so that the lags parameter can be changed without reshaping the xdata matrix.
++ #------------------------
++ 
++ if (!identical(T2,T))
++    {print('Mismatch of x and y data lengths');return()}
++ {if (identical(breaks,NULL))
++    nbreaks <- 0
++ else
++    nbreaks<-length(breaks)
++ }
++ breaks <- c(0,breaks,T);
++ smpl <- vector(mode="integer",length=0);
++ for (nb in 1:(nbreaks+1))
++    {smpl <- c(smpl,(breaks[nb]+lags+1):breaks[nb+1])}
++ Tsmpl <- length(smpl)
++ X <- array(0,dim=c(Tsmpl,nvar,lags))
++ for(ix in seq(along=smpl))
++     X[ix,,] <- t(ydata[smpl[ix]-(1:lags),])
++ dim(X) <- c(Tsmpl,nvar*lags)
++ X <- cbind(X, xdata[smpl,])
++ y <- ydata[smpl,]
++ # Everything now set up with input data for y=Xb+e 
++ # ------------------Form persistence dummies-------------------
++ if (!identical(lambda,0) | mu>0)
++   {ybar <- apply(as.array(ydata[1:lags,]),2,mean)
++    dim(ybar) <- c(1,dim(ydata)[2])
++    {if (!nox) 
++       {xbar <- apply(array(xdata[1:lags,],dim=c(lags,dim(xdata)[2])),2,mean)
++        dim(xbar)=c(1,dim(xdata)[2])}
++    else
++      xbar <- NULL
++   }
++    if (!identical(lambda,0))
++      {if (lambda<0)
++         {lambda <- -lambda
++          xbar <- array(0,c(1,dim(xdata)[2]))}
++       xdum <- lambda * cbind(array(rep(ybar,lags),dim=c(1,lags*length(ybar))), xbar)
++       ydum <- array(0,c(1,nvar))
++       ydum[1,] <- lambda*ybar
++       #-------- debug -----------
++       # browser()
++       y <- rbind(y,ydum)
++       X <- rbind(X,xdum)
++     }
++    if (mu>0)
++      {xdum <- cbind( array(rep(diag(as.vector(ybar)),lags),dim=c(dim(ybar)[2],dim(ybar)[2]*lags)),
++                     array(0,dim=c(nvar,dim(xdata[2]))))*mu;
++       ydum <- mu*diag(as.vector(ybar));
++       #-----------debug--------
++       #browser()
++       X <- rbind(X,xdum)
++       y <- rbind(y,ydum)
++     }
++  }
++ # [vl,d,vr]=svd(X(:,:),0);
++ vldvr <- svd(X)
++ di <- 1./vldvr$d
++ #B <- vldvr$v %*% diag(di) %*% t(vldvr$u) %*% y (line below is just more efficient)
++ B <- vldvr$v %*% (di * (t(vldvr$u) %*% y))
++ u <-  y-X %*% B;
++ xxi <-  matrix(di,nX,nX) * t(vldvr$v)
++ xxi <-  crossprod(xxi)
++ nX <- dim(xxi)[1]
++ # -----------------debug-----------
++  browser()
++ #----------------------------------
++ dim(B) <-  c(nvar*lags+nx,nvar) # rhs variables, equations
++ By <-  B[1:(nvar*lags),]
++ dim(By) <-  c(nvar,lags,nvar) # variables, lags, equations
++ By <-  aperm(By,c(3,1,2))  #equations, variables, lags to match impulsdt.m
++ ## label all the output, if the data matrices had labels
++ dimnames(By)[1] <- dimnames(ydata)[2]
++ dimnames(By)[2] <- dimnames(ydata)[2]
++ dimnames(xxi)[1] <- c(dimnames(ydata)[2],dimnames(xdata)[2],recursive=TRUE)
++ dimnames(xxi)[2] <- dimnames(xxi)[1]
++ {if (nox)
++    Bx <-  NULL
++ else
++   {
++    Bx <-  array(B[nvar*lags+(1:nx),],c(dim(B)[2],nx))
++    dimnames(Bx)[1] <- dimnames(ydata)[2]
++    dimnames(Bx)[2] <- dimnames(xdata)[2]
++  }
++ }
++ # logintlh <-  matrictint(u'*u,xxi,size(X,1)-nvar-1)-.5*nvar*(nvar+1)*log(2*pi);
++ return(list(By=By,Bx=Bx,u=u,xxi= xxi)) #var.logintlh <-  logintlh;  
++ ### Might want to create a version without the dimnames if using this in a program.
++ }
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Error in matrix(di, nX, nX) : Object "nX" not found
+>  
+> rfvar3 <- function(ydata=NA,lags=6,xdata=NA,breaks=NULL,lambda=5,mu=2)
++   {
++ # This algorithm goes for accuracy without worrying about memory requirements.
++ # ydata:   dependent variable data matrix
++ # xdata:   exogenous variable data matrix
++ #          Note that if either ydata or xdata has only one column, it must still have a dim vector.  In
++ #          other words it must be a Tx1 array, not a vector of length T.
++ #------------------
++ # lags:    number of lags
++ # breaks:  rows in ydata and xdata after which there is a break.  This allows for
++ #          discontinuities in the data (e.g. war years) and for the possibility of
++ #          adding dummy observations to implement a prior.  This must be a column vector.
++ #          Note that a single dummy observation becomes lags+1 rows of the data matrix,
++ #          with a break separating it from the rest of the data.  The function treats the 
++ #          first lags observations at the top and after each "break" in ydata and xdata as
++ #          initial conditions. 
++ # lambda:  weight on "co-persistence" prior dummy observations.  This expresses
++ #          belief that when data on *all* y's are stable at their initial levels, they will
++ #          tend to persist at that level.  lambda=5 is a reasonable first try.  With lambda<0,
++ #          constant term is not included in the dummy observation, so that stationary models
++ #          with means equal to initial ybar do not fit the prior mean.  With lambda>0, the prior
++ #          implies that large constants are unlikely if unit roots are present.
++ # mu:      weight on "own persistence" prior dummy observation.  Expresses belief
++ #          that when y_i has been stable at its initial level, it will tend to persist
++ #          at that level, regardless of the values of other variables.  There is
++ #          one of these for each variable.  A reasonable first guess is mu=2.
++ #      The program assumes that the first lags rows of ydata and xdata are real data, not dummies.
++ #      Dummy observations should go at the end, if any.  If pre-sample x's are not available,
++ #      repeating the initial xdata(lags+1,:) row or copying xdata(lags+1:2*lags,:) into 
++ #      xdata(1:lags,:) are reasonable subsititutes.  These values are used in forming the
++ #      persistence priors.
++ # Code written by Christopher Sims.  This version 6/15/03.
++ #[T,nvar]=size(ydata);
++ T<-dim(ydata)[1];
++ nvar<-dim(ydata)[2];
++ #nox=isempty(xdata);
++ nox <- identical(xdata,NULL)
++ {if(!nox)
++   {T2 <- dim(xdata)[1]
++    nx <- dim(xdata)[2]
++              #[T2,nx]=size(xdata);
++  }
++ else
++    {T2 <- T; nx <- 0; xdata<- matrix(0,T2,0)
++   }
++ }
++ # note that x must be same length as y, even though first part of x will not be used.
++ # This is so that the lags parameter can be changed without reshaping the xdata matrix.
++ #------------------------
++ 
++ if (!identical(T2,T))
++    {print('Mismatch of x and y data lengths');return()}
++ {if (identical(breaks,NULL))
++    nbreaks <- 0
++ else
++    nbreaks<-length(breaks)
++ }
++ breaks <- c(0,breaks,T);
++ smpl <- vector(mode="integer",length=0);
++ for (nb in 1:(nbreaks+1))
++    {smpl <- c(smpl,(breaks[nb]+lags+1):breaks[nb+1])}
++ Tsmpl <- length(smpl)
++ X <- array(0,dim=c(Tsmpl,nvar,lags))
++ for(ix in seq(along=smpl))
++     X[ix,,] <- t(ydata[smpl[ix]-(1:lags),])
++ dim(X) <- c(Tsmpl,nvar*lags)
++ X <- cbind(X, xdata[smpl,])
++ y <- ydata[smpl,]
++ # Everything now set up with input data for y=Xb+e 
++ # ------------------Form persistence dummies-------------------
++ if (!identical(lambda,0) | mu>0)
++   {ybar <- apply(as.array(ydata[1:lags,]),2,mean)
++    dim(ybar) <- c(1,dim(ydata)[2])
++    {if (!nox) 
++       {xbar <- apply(array(xdata[1:lags,],dim=c(lags,dim(xdata)[2])),2,mean)
++        dim(xbar)=c(1,dim(xdata)[2])}
++    else
++      xbar <- NULL
++   }
++    if (!identical(lambda,0))
++      {if (lambda<0)
++         {lambda <- -lambda
++          xbar <- array(0,c(1,dim(xdata)[2]))}
++       xdum <- lambda * cbind(array(rep(ybar,lags),dim=c(1,lags*length(ybar))), xbar)
++       ydum <- array(0,c(1,nvar))
++       ydum[1,] <- lambda*ybar
++       #-------- debug -----------
++       # browser()
++       y <- rbind(y,ydum)
++       X <- rbind(X,xdum)
++     }
++    if (mu>0)
++      {xdum <- cbind( array(rep(diag(as.vector(ybar)),lags),dim=c(dim(ybar)[2],dim(ybar)[2]*lags)),
++                     array(0,dim=c(nvar,dim(xdata[2]))))*mu;
++       ydum <- mu*diag(as.vector(ybar));
++       #-----------debug--------
++       #browser()
++       X <- rbind(X,xdum)
++       y <- rbind(y,ydum)
++     }
++  }
++ # [vl,d,vr]=svd(X(:,:),0);
++ vldvr <- svd(X)
++ di <- 1./vldvr$d
++ #B <- vldvr$v %*% diag(di) %*% t(vldvr$u) %*% y (line below is just more efficient)
++ B <- vldvr$v %*% (di * (t(vldvr$u) %*% y))
++ u <-  y-X %*% B;
++ xxi <-  matrix(di,nX,nX) * t(vldvr$v)
++ xxi <-  crossprod(xxi)
++ nX <- dim(xxi)[1]
++ # -----------------debug-----------
++ # browser()
++ #----------------------------------
++ dim(B) <-  c(nvar*lags+nx,nvar) # rhs variables, equations
++ By <-  B[1:(nvar*lags),]
++ dim(By) <-  c(nvar,lags,nvar) # variables, lags, equations
++ By <-  aperm(By,c(3,1,2))  #equations, variables, lags to match impulsdt.m
++ ## label all the output, if the data matrices had labels
++ dimnames(By)[1] <- dimnames(ydata)[2]
++ dimnames(By)[2] <- dimnames(ydata)[2]
++ dimnames(xxi)[1] <- c(dimnames(ydata)[2],dimnames(xdata)[2],recursive=TRUE)
++ dimnames(xxi)[2] <- dimnames(xxi)[1]
++ {if (nox)
++    Bx <-  NULL
++ else
++   {
++    Bx <-  array(B[nvar*lags+(1:nx),],c(dim(B)[2],nx))
++    dimnames(Bx)[1] <- dimnames(ydata)[2]
++    dimnames(Bx)[2] <- dimnames(xdata)[2]
++  }
++ }
++ # logintlh <-  matrictint(u'*u,xxi,size(X,1)-nvar-1)-.5*nvar*(nvar+1)*log(2*pi);
++ return(list(By=By,Bx=Bx,u=u,xxi= xxi)) #var.logintlh <-  logintlh;  
++ ### Might want to create a version without the dimnames if using this in a program.
++ }
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Error in matrix(di, nX, nX) : Object "nX" not found
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Error in matrix(di, nX, nX) : Object "nX" not found
+>  
+> rfvar3 <- function(ydata=NA,lags=6,xdata=NA,breaks=NULL,lambda=5,mu=2)
++   {
++ # This algorithm goes for accuracy without worrying about memory requirements.
++ # ydata:   dependent variable data matrix
++ # xdata:   exogenous variable data matrix
++ #          Note that if either ydata or xdata has only one column, it must still have a dim vector.  In
++ #          other words it must be a Tx1 array, not a vector of length T.
++ #------------------
++ # lags:    number of lags
++ # breaks:  rows in ydata and xdata after which there is a break.  This allows for
++ #          discontinuities in the data (e.g. war years) and for the possibility of
++ #          adding dummy observations to implement a prior.  This must be a column vector.
++ #          Note that a single dummy observation becomes lags+1 rows of the data matrix,
++ #          with a break separating it from the rest of the data.  The function treats the 
++ #          first lags observations at the top and after each "break" in ydata and xdata as
++ #          initial conditions. 
++ # lambda:  weight on "co-persistence" prior dummy observations.  This expresses
++ #          belief that when data on *all* y's are stable at their initial levels, they will
++ #          tend to persist at that level.  lambda=5 is a reasonable first try.  With lambda<0,
++ #          constant term is not included in the dummy observation, so that stationary models
++ #          with means equal to initial ybar do not fit the prior mean.  With lambda>0, the prior
++ #          implies that large constants are unlikely if unit roots are present.
++ # mu:      weight on "own persistence" prior dummy observation.  Expresses belief
++ #          that when y_i has been stable at its initial level, it will tend to persist
++ #          at that level, regardless of the values of other variables.  There is
++ #          one of these for each variable.  A reasonable first guess is mu=2.
++ #      The program assumes that the first lags rows of ydata and xdata are real data, not dummies.
++ #      Dummy observations should go at the end, if any.  If pre-sample x's are not available,
++ #      repeating the initial xdata(lags+1,:) row or copying xdata(lags+1:2*lags,:) into 
++ #      xdata(1:lags,:) are reasonable subsititutes.  These values are used in forming the
++ #      persistence priors.
++ # Code written by Christopher Sims.  This version 6/15/03.
++ #[T,nvar]=size(ydata);
++ T<-dim(ydata)[1];
++ nvar<-dim(ydata)[2];
++ #nox=isempty(xdata);
++ nox <- identical(xdata,NULL)
++ {if(!nox)
++   {T2 <- dim(xdata)[1]
++    nx <- dim(xdata)[2]
++              #[T2,nx]=size(xdata);
++  }
++ else
++    {T2 <- T; nx <- 0; xdata<- matrix(0,T2,0)
++   }
++ }
++ # note that x must be same length as y, even though first part of x will not be used.
++ # This is so that the lags parameter can be changed without reshaping the xdata matrix.
++ #------------------------
++ 
++ if (!identical(T2,T))
++    {print('Mismatch of x and y data lengths');return()}
++ {if (identical(breaks,NULL))
++    nbreaks <- 0
++ else
++    nbreaks<-length(breaks)
++ }
++ breaks <- c(0,breaks,T);
++ smpl <- vector(mode="integer",length=0);
++ for (nb in 1:(nbreaks+1))
++    {smpl <- c(smpl,(breaks[nb]+lags+1):breaks[nb+1])}
++ Tsmpl <- length(smpl)
++ X <- array(0,dim=c(Tsmpl,nvar,lags))
++ for(ix in seq(along=smpl))
++     X[ix,,] <- t(ydata[smpl[ix]-(1:lags),])
++ dim(X) <- c(Tsmpl,nvar*lags)
++ X <- cbind(X, xdata[smpl,])
++ y <- ydata[smpl,]
++ # Everything now set up with input data for y=Xb+e 
++ # ------------------Form persistence dummies-------------------
++ if (!identical(lambda,0) | mu>0)
++   {ybar <- apply(as.array(ydata[1:lags,]),2,mean)
++    dim(ybar) <- c(1,dim(ydata)[2])
++    {if (!nox) 
++       {xbar <- apply(array(xdata[1:lags,],dim=c(lags,dim(xdata)[2])),2,mean)
++        dim(xbar)=c(1,dim(xdata)[2])}
++    else
++      xbar <- NULL
++   }
++    if (!identical(lambda,0))
++      {if (lambda<0)
++         {lambda <- -lambda
++          xbar <- array(0,c(1,dim(xdata)[2]))}
++       xdum <- lambda * cbind(array(rep(ybar,lags),dim=c(1,lags*length(ybar))), xbar)
++       ydum <- array(0,c(1,nvar))
++       ydum[1,] <- lambda*ybar
++       #-------- debug -----------
++       # browser()
++       y <- rbind(y,ydum)
++       X <- rbind(X,xdum)
++     }
++    if (mu>0)
++      {xdum <- cbind( array(rep(diag(as.vector(ybar)),lags),dim=c(dim(ybar)[2],dim(ybar)[2]*lags)),
++                     array(0,dim=c(nvar,dim(xdata[2]))))*mu;
++       ydum <- mu*diag(as.vector(ybar));
++       #-----------debug--------
++       #browser()
++       X <- rbind(X,xdum)
++       y <- rbind(y,ydum)
++     }
++  }
++ # [vl,d,vr]=svd(X(:,:),0);
++ vldvr <- svd(X)
++ di <- 1./vldvr$d
++ #B <- vldvr$v %*% diag(di) %*% t(vldvr$u) %*% y (line below is just more efficient)
++ B <- vldvr$v %*% (di * (t(vldvr$u) %*% y))
++ u <-  y-X %*% B;
++ xxi <-  matrix(di,nX,nX) * t(vldvr$v)
++ xxi <-  crossprod(xxi)
++ nX <- dim(xxi)[1]
++ # -----------------debug-----------
++ browser()
++ #----------------------------------
++ dim(B) <-  c(nvar*lags+nx,nvar) # rhs variables, equations
++ By <-  B[1:(nvar*lags),]
++ dim(By) <-  c(nvar,lags,nvar) # variables, lags, equations
++ By <-  aperm(By,c(3,1,2))  #equations, variables, lags to match impulsdt.m
++ ## label all the output, if the data matrices had labels
++ dimnames(By)[1] <- dimnames(ydata)[2]
++ dimnames(By)[2] <- dimnames(ydata)[2]
++ dimnames(xxi)[1] <- c(dimnames(ydata)[2],dimnames(xdata)[2],recursive=TRUE)
++ dimnames(xxi)[2] <- dimnames(xxi)[1]
++ {if (nox)
++    Bx <-  NULL
++ else
++   {
++    Bx <-  array(B[nvar*lags+(1:nx),],c(dim(B)[2],nx))
++    dimnames(Bx)[1] <- dimnames(ydata)[2]
++    dimnames(Bx)[2] <- dimnames(xdata)[2]
++  }
++ }
++ # logintlh <-  matrictint(u'*u,xxi,size(X,1)-nvar-1)-.5*nvar*(nvar+1)*log(2*pi);
++ return(list(By=By,Bx=Bx,u=u,xxi= xxi)) #var.logintlh <-  logintlh;  
++ ### Might want to create a version without the dimnames if using this in a program.
++ }
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Error in matrix(di, nX, nX) : Object "nX" not found
+>  
+> rfvar3 <- function(ydata=NA,lags=6,xdata=NA,breaks=NULL,lambda=5,mu=2)
++   {
++ # This algorithm goes for accuracy without worrying about memory requirements.
++ # ydata:   dependent variable data matrix
++ # xdata:   exogenous variable data matrix
++ #          Note that if either ydata or xdata has only one column, it must still have a dim vector.  In
++ #          other words it must be a Tx1 array, not a vector of length T.
++ #------------------
++ # lags:    number of lags
++ # breaks:  rows in ydata and xdata after which there is a break.  This allows for
++ #          discontinuities in the data (e.g. war years) and for the possibility of
++ #          adding dummy observations to implement a prior.  This must be a column vector.
++ #          Note that a single dummy observation becomes lags+1 rows of the data matrix,
++ #          with a break separating it from the rest of the data.  The function treats the 
++ #          first lags observations at the top and after each "break" in ydata and xdata as
++ #          initial conditions. 
++ # lambda:  weight on "co-persistence" prior dummy observations.  This expresses
++ #          belief that when data on *all* y's are stable at their initial levels, they will
++ #          tend to persist at that level.  lambda=5 is a reasonable first try.  With lambda<0,
++ #          constant term is not included in the dummy observation, so that stationary models
++ #          with means equal to initial ybar do not fit the prior mean.  With lambda>0, the prior
++ #          implies that large constants are unlikely if unit roots are present.
++ # mu:      weight on "own persistence" prior dummy observation.  Expresses belief
++ #          that when y_i has been stable at its initial level, it will tend to persist
++ #          at that level, regardless of the values of other variables.  There is
++ #          one of these for each variable.  A reasonable first guess is mu=2.
++ #      The program assumes that the first lags rows of ydata and xdata are real data, not dummies.
++ #      Dummy observations should go at the end, if any.  If pre-sample x's are not available,
++ #      repeating the initial xdata(lags+1,:) row or copying xdata(lags+1:2*lags,:) into 
++ #      xdata(1:lags,:) are reasonable subsititutes.  These values are used in forming the
++ #      persistence priors.
++ # Code written by Christopher Sims.  This version 6/15/03.
++ #[T,nvar]=size(ydata);
++ T<-dim(ydata)[1];
++ nvar<-dim(ydata)[2];
++ #nox=isempty(xdata);
++ nox <- identical(xdata,NULL)
++ {if(!nox)
++   {T2 <- dim(xdata)[1]
++    nx <- dim(xdata)[2]
++              #[T2,nx]=size(xdata);
++  }
++ else
++    {T2 <- T; nx <- 0; xdata<- matrix(0,T2,0)
++   }
++ }
++ # note that x must be same length as y, even though first part of x will not be used.
++ # This is so that the lags parameter can be changed without reshaping the xdata matrix.
++ #------------------------
++ 
++ if (!identical(T2,T))
++    {print('Mismatch of x and y data lengths');return()}
++ {if (identical(breaks,NULL))
++    nbreaks <- 0
++ else
++    nbreaks<-length(breaks)
++ }
++ breaks <- c(0,breaks,T);
++ smpl <- vector(mode="integer",length=0);
++ for (nb in 1:(nbreaks+1))
++    {smpl <- c(smpl,(breaks[nb]+lags+1):breaks[nb+1])}
++ Tsmpl <- length(smpl)
++ X <- array(0,dim=c(Tsmpl,nvar,lags))
++ for(ix in seq(along=smpl))
++     X[ix,,] <- t(ydata[smpl[ix]-(1:lags),])
++ dim(X) <- c(Tsmpl,nvar*lags)
++ X <- cbind(X, xdata[smpl,])
++ y <- ydata[smpl,]
++ # Everything now set up with input data for y=Xb+e 
++ # ------------------Form persistence dummies-------------------
++ if (!identical(lambda,0) | mu>0)
++   {ybar <- apply(as.array(ydata[1:lags,]),2,mean)
++    dim(ybar) <- c(1,dim(ydata)[2])
++    {if (!nox) 
++       {xbar <- apply(array(xdata[1:lags,],dim=c(lags,dim(xdata)[2])),2,mean)
++        dim(xbar)=c(1,dim(xdata)[2])}
++    else
++      xbar <- NULL
++   }
++    if (!identical(lambda,0))
++      {if (lambda<0)
++         {lambda <- -lambda
++          xbar <- array(0,c(1,dim(xdata)[2]))}
++       xdum <- lambda * cbind(array(rep(ybar,lags),dim=c(1,lags*length(ybar))), xbar)
++       ydum <- array(0,c(1,nvar))
++       ydum[1,] <- lambda*ybar
++       #-------- debug -----------
++       # browser()
++       y <- rbind(y,ydum)
++       X <- rbind(X,xdum)
++     }
++    if (mu>0)
++      {xdum <- cbind( array(rep(diag(as.vector(ybar)),lags),dim=c(dim(ybar)[2],dim(ybar)[2]*lags)),
++                     array(0,dim=c(nvar,dim(xdata[2]))))*mu;
++       ydum <- mu*diag(as.vector(ybar));
++       #-----------debug--------
++       #browser()
++       X <- rbind(X,xdum)
++       y <- rbind(y,ydum)
++     }
++  }
++ # [vl,d,vr]=svd(X(:,:),0);
++ vldvr <- svd(X)
++ di <- 1./vldvr$d
++ #B <- vldvr$v %*% diag(di) %*% t(vldvr$u) %*% y (line below is just more efficient)
++ B <- vldvr$v %*% (di * (t(vldvr$u) %*% y))
++ u <-  y-X %*% B;
++ nX <- dim(X)[2]
++ xxi <-  matrix(di,nX,nX) * t(vldvr$v)
++ xxi <-  crossprod(xxi)
++ # -----------------debug-----------
++ browser()
++ #----------------------------------
++ dim(B) <-  c(nvar*lags+nx,nvar) # rhs variables, equations
++ By <-  B[1:(nvar*lags),]
++ dim(By) <-  c(nvar,lags,nvar) # variables, lags, equations
++ By <-  aperm(By,c(3,1,2))  #equations, variables, lags to match impulsdt.m
++ ## label all the output, if the data matrices had labels
++ dimnames(By)[1] <- dimnames(ydata)[2]
++ dimnames(By)[2] <- dimnames(ydata)[2]
++ dimnames(xxi)[1] <- c(dimnames(ydata)[2],dimnames(xdata)[2],recursive=TRUE)
++ dimnames(xxi)[2] <- dimnames(xxi)[1]
++ {if (nox)
++    Bx <-  NULL
++ else
++   {
++    Bx <-  array(B[nvar*lags+(1:nx),],c(dim(B)[2],nx))
++    dimnames(Bx)[1] <- dimnames(ydata)[2]
++    dimnames(Bx)[2] <- dimnames(xdata)[2]
++  }
++ }
++ # logintlh <-  matrictint(u'*u,xxi,size(X,1)-nvar-1)-.5*nvar*(nvar+1)*log(2*pi);
++ return(list(By=By,Bx=Bx,u=u,xxi= xxi)) #var.logintlh <-  logintlh;  
++ ### Might want to create a version without the dimnames if using this in a program.
++ }
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Called from: rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1, 
+    dim(awmdata)[1] - 1, 1))
+Browse[1]> nX
+[1] 31
+Browse[1]> c
+Error in rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1,  : 
+	length of dimnames [1] must match that of dims [3]
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Called from: rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1, 
+    dim(awmdata)[1] - 1, 1))
+Browse[1]> n
+debug: dim(B) <- c(nvar * lags + nx, nvar)
+Browse[1]> n
+debug: By <- B[1:(nvar * lags), ]
+Browse[1]> n
+debug: dim(By) <- c(nvar, lags, nvar)
+Browse[1]> n
+debug: By <- aperm(By, c(3, 1, 2))
+Browse[1]> n
+debug: dimnames(By)[1] <- dimnames(ydata)[2]
+Browse[1]> n
+Error in rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1,  : 
+	length of dimnames [1] must match that of dims [3]
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Called from: rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1, 
+    dim(awmdata)[1] - 1, 1))
+Browse[1]> n
+debug: dim(B) <- c(nvar * lags + nx, nvar)
+Browse[1]> n
+debug: By <- B[1:(nvar * lags), ]
+Browse[1]> n
+debug: dim(By) <- c(nvar, lags, nvar)
+Browse[1]> n
+debug: By <- aperm(By, c(3, 1, 2))
+Browse[1]> n
+debug: dimnames(By)[1] <- dimnames(ydata)[2]
+Browse[1]> dim(By)
+[1] 6 6 5
+Browse[1]> dimnames(ydata)[2]
+[[1]]
+[1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"    
+
+Browse[1]> dimnames(By)[1]
+NULL
+Browse[1]> n
+Error in rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1,  : 
+	length of dimnames [1] must match that of dims [3]
+> dimnames(By)[1]
+Error: Object "By" not found
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Called from: rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1, 
+    dim(awmdata)[1] - 1, 1))
+Browse[1]> n
+debug: dim(B) <- c(nvar * lags + nx, nvar)
+Browse[1]> n
+debug: By <- B[1:(nvar * lags), ]
+Browse[1]> n
+debug: dim(By) <- c(nvar, lags, nvar)
+Browse[1]> n
+debug: By <- aperm(By, c(3, 1, 2))
+Browse[1]> n
+debug: dimnames(By)[1] <- dimnames(ydata)[2]
+Browse[1]> dimnames(By)[[1]] <- dimnames(ydata)[[2]]
+Error: length of dimnames [1] must match that of dims [3]
+Browse[1]> str(dimnames(By))
+ NULL
+Browse[1]> dimnames(By) <- list(NULL,NULL,NULL)
+Browse[1]> dimnames(By)[1] <- dimnames(ydata)[2]
+Browse[1]> c
+Error in rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1,  : 
+	dimnames must be a list
+In addition: Warning message: 
+number of items to replace is not a multiple of replacement length 
+> list(dimnames(awmdata)[2],dimnames(awmdata)[2],recursive=TRUE)
+[[1]]
+[[1]][[1]]
+[1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"    
+
+
+[[2]]
+[[2]][[1]]
+[1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"    
+
+
+$recursive
+[1] TRUE
+
+> list(dimnames(awmdata)[[2]],dimnames(awmdata)[[2]],recursive=TRUE)
+[[1]]
+[1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"    
+
+[[2]]
+[1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"    
+
+$recursive
+[1] TRUE
+
+> list(dimnames(awmdata)[[2]],dimnames(awmdata)[[2]])
+[[1]]
+[1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"    
+
+[[2]]
+[1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"    
+
+> c(dimnames(awmdata)[2],dimnames(awmdata)[2],recursive=TRUE)
+ [1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"     "cons"   "invest"
+ [9] "GDP"    "Empl"   "dPGDP"  "RW"    
+> as.list(c(dimnames(awmdata)[2],dimnames(awmdata)[2],recursive=TRUE))
+[[1]]
+[1] "cons"
+
+[[2]]
+[1] "invest"
+
+[[3]]
+[1] "GDP"
+
+[[4]]
+[1] "Empl"
+
+[[5]]
+[1] "dPGDP"
+
+[[6]]
+[1] "RW"
+
+[[7]]
+[1] "cons"
+
+[[8]]
+[1] "invest"
+
+[[9]]
+[1] "GDP"
+
+[[10]]
+[1] "Empl"
+
+[[11]]
+[1] "dPGDP"
+
+[[12]]
+[1] "RW"
+
+> list(c(dimnames(awmdata)[2],dimnames(awmdata)[2],recursive=TRUE))
+[[1]]
+ [1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"     "cons"   "invest"
+ [9] "GDP"    "Empl"   "dPGDP"  "RW"    
+
+> list(c(dimnames(awmdata)[[2]],dimnames(awmdata)[[2]]))
+[[1]]
+ [1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"     "cons"   "invest"
+ [9] "GDP"    "Empl"   "dPGDP"  "RW"    
+
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Called from: rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1, 
+    dim(awmdata)[1] - 1, 1))
+Browse[1]> c
+Error in rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1,  : 
+	length of dimnames [1] must match that of dims [2]
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Called from: rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1, 
+    dim(awmdata)[1] - 1, 1))
+Browse[1]> n
+debug: dim(B) <- c(nvar * lags + nx, nvar)
+Browse[1]> n
+debug: By <- B[1:(nvar * lags), ]
+Browse[1]> n
+debug: dim(By) <- c(nvar, lags, nvar)
+Browse[1]> n
+debug: By <- aperm(By, c(3, 1, 2))
+Browse[1]> n
+debug: dimnames(By) <- list(NULL, NULL, NULL)
+Browse[1]> n
+debug: dimnames(By)[1] <- dimnames(ydata)[2]
+Browse[1]> n
+debug: dimnames(By)[2] <- dimnames(ydata)[2]
+Browse[1]> n
+debug: dimnames(xxi)[1] <- list(c(dimnames(ydata)[[2]], dimnames(xdata)[[2]]))
+Browse[1]> n
+Error in rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1,  : 
+	length of dimnames [1] must match that of dims [2]
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Called from: rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1, 
+    dim(awmdata)[1] - 1, 1))
+Browse[1]> n
+debug: dim(B) <- c(nvar * lags + nx, nvar)
+Browse[1]> n
+debug: By <- B[1:(nvar * lags), ]
+Browse[1]> n
+debug: dim(By) <- c(nvar, lags, nvar)
+Browse[1]> n
+debug: By <- aperm(By, c(3, 1, 2))
+Browse[1]> n
+debug: dimnames(By) <- list(NULL, NULL, NULL)
+Browse[1]> n
+debug: dimnames(By)[1] <- dimnames(ydata)[2]
+Browse[1]> n
+debug: dimnames(By)[2] <- dimnames(ydata)[2]
+Browse[1]> n
+debug: dimnames(xxi)[1] <- list(c(dimnames(ydata)[[2]], dimnames(xdata)[[2]]))
+Browse[1]> str(xxi)
+ num [1:31, 1:31]  0.061840 -0.000854 -0.034271 -0.014347  0.013840 ...
+Browse[1]> dim(xxi)
+[1] 31 31
+Browse[1]> dimnames(xxi)
+NULL
+Browse[1]> dimnames(xxi) <- list(NULL,NULL)
+Browse[1]> c
+Error in rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1,  : 
+	length of dimnames [1] not equal to array extent
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Called from: rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1, 
+    dim(awmdata)[1] - 1, 1))
+Browse[1]> c
+Error in rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1,  : 
+	length of dimnames [1] must match that of dims [2]
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Called from: rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1, 
+    dim(awmdata)[1] - 1, 1))
+Browse[1]> n
+debug: dim(B) <- c(nvar * lags + nx, nvar)
+Browse[1]> n
+debug: By <- B[1:(nvar * lags), ]
+Browse[1]> n
+debug: dim(By) <- c(nvar, lags, nvar)
+Browse[1]> n
+debug: By <- aperm(By, c(3, 1, 2))
+Browse[1]> n
+debug: dimnames(By) <- list(NULL, NULL, NULL)
+Browse[1]> n
+debug: dimnames(By)[1] <- dimnames(ydata)[2]
+Browse[1]> n
+debug: dimnames(By)[2] <- dimnames(ydata)[2]
+Browse[1]> n
+debug: dimnames(xxi)[1] <- list(c(dimnames(ydata)[[2]], dimnames(xdata)[[2]]))
+Browse[1]> n
+Error in rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1,  : 
+	length of dimnames [1] must match that of dims [2]
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Called from: rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1, 
+    dim(awmdata)[1] - 1, 1))
+Browse[1]> n
+debug: dim(B) <- c(nvar * lags + nx, nvar)
+Browse[1]> n
+debug: By <- B[1:(nvar * lags), ]
+Browse[1]> n
+debug: dim(By) <- c(nvar, lags, nvar)
+Browse[1]> n
+debug: By <- aperm(By, c(3, 1, 2))
+Browse[1]> n
+debug: dimnames(By) <- list(NULL, NULL, NULL)
+Browse[1]> n
+debug: dimnames(By)[1] <- dimnames(ydata)[2]
+Browse[1]> n
+debug: dimnames(By)[2] <- dimnames(ydata)[2]
+Browse[1]> n
+debug: dimnames(xxi)[1] <- list(c(dimnames(ydata)[[2]], dimnames(xdata)[[2]]))
+Browse[1]> dimnames(xdata)
+NULL
+Browse[1]> dimnames(xdata)[[2]]
+NULL
+Browse[1]> dimnames(ydata)[[2]]
+[1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"    
+Browse[1]> c
+Error in rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1,  : 
+	length of dimnames [1] must match that of dims [2]
+> help(rep)
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Called from: rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1, 
+    dim(awmdata)[1] - 1, 1))
+Browse[1]> n
+debug: dim(B) <- c(nvar * lags + nx, nvar)
+Browse[1]> n
+debug: By <- B[1:(nvar * lags), ]
+Browse[1]> n
+debug: dim(By) <- c(nvar, lags, nvar)
+Browse[1]> n
+debug: By <- aperm(By, c(3, 1, 2))
+Browse[1]> n
+debug: dimnames(By) <- list(NULL, NULL, NULL)
+Browse[1]> n
+debug: dimnames(By)[1] <- dimnames(ydata)[2]
+Browse[1]> n
+debug: dimnames(By)[2] <- dimnames(ydata)[2]
+Browse[1]> n
+debug: dimnames(xxi)[1] <- list(c(rep(dimnames(ydata)[[2]], each = lags), 
+    dimnames(xdata)[[2]]))
+Browse[1]> n
+Error in rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1,  : 
+	length of dimnames [1] must match that of dims [2]
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Called from: rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1, 
+    dim(awmdata)[1] - 1, 1))
+Browse[1]> n
+debug: dim(B) <- c(nvar * lags + nx, nvar)
+Browse[1]> n
+debug: By <- B[1:(nvar * lags), ]
+Browse[1]> n
+debug: dim(By) <- c(nvar, lags, nvar)
+Browse[1]> n
+debug: By <- aperm(By, c(3, 1, 2))
+Browse[1]> n
+debug: dimnames(By) <- list(NULL, NULL, NULL)
+Browse[1]> n
+debug: dimnames(By)[1] <- dimnames(ydata)[2]
+Browse[1]> n
+debug: dimnames(By)[2] <- dimnames(ydata)[2]
+Browse[1]> n
+debug: dimnames(xxi)[1] <- list(c(rep(dimnames(ydata)[[2]], each = lags), 
+    dimnames(xdata)[[2]]))
+Browse[1]> length(rep(dimnames(ydata)[[2]],each=lags))
+[1] 30
+Browse[1]> dim(xxi)
+[1] 31 31
+Browse[1]> dim(xdata)
+[1] 131   1
+Browse[1]> dimnames(xdata)
+NULL
+Browse[1]> cat("1","2")
+Error: syntax error
+Browse[1]> cat("1","2")
+1 2Browse[1]> cat("1","2",sep="")
+12Browse[1]> c
+Error in rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1,  : 
+	length of dimnames [1] must match that of dims [2]
+> helpl(list)
+Error: couldn't find function "helpl"
+> help(list)
+> options(browser)
+Error in options(...) : invalid argument
+> options(browser="firefox")
+> help(list)
+> help.start()
+Making links in per-session dir ...
+If firefox is already running, it is *not* restarted, and you must
+    switch to its window.
+Otherwise, be patient ...
+sh: line 1: firefox: command not found
+> sh: line 1: firefox: command not found
+
+> help.start()
+Making links in per-session dir ...
+If firefox is already running, it is *not* restarted, and you must
+    switch to its window.
+Otherwise, be patient ...
+sh: line 1: firefox: command not found
+sh: line 1: firefox: command not found
+> help.start()
+Making links in per-session dir ...
+If firefox is already running, it is *not* restarted, and you must
+    switch to its window.
+Otherwise, be patient ...
+sh: line 1: firefox: command not found
+sh: line 1: firefox: command not found
+> options(browser="/usr/local/opt/firefox/bin/firefox")
+> help.start()
+Making links in per-session dir ...
+If /usr/local/opt/firefox/bin/firefox is already running, it is *not*
+    restarted, and you must switch to its window.
+Otherwise, be patient ...
+> sh: line 1: /usr/local/opt/firefox/bin/firefox: No such file or directory
+sh: line 1: /usr/local/opt/firefox/bin/firefox: No such file or directory
+
+> sh: line 1: /usr/local/opt/firefox/firefox: No such file or directoryoptions(browser="/usr/local/opt/firefox/firefox")
+Error: syntax error
+> options(browser="/usr/local/opt/firefox/bin/firefox")
+> help.start()
+Making links in per-session dir ...
+If /usr/local/opt/firefox/bin/firefox is already running, it is *not*
+    restarted, and you must switch to its window.
+Otherwise, be patient ...
+> sh: line 1: /usr/local/opt/firefox/bin/firefox: No such file or directory
+sh: line 1: /usr/local/opt/firefox/bin/firefox: No such file or directory
+
+> options(browser="/usr/local/opt/firefox/firefox")
+> help.start()
+Making links in per-session dir ...
+If /usr/local/opt/firefox/firefox is already running, it is *not*
+    restarted, and you must switch to its window.
+Otherwise, be patient ...
+> Error: No running window found
+LoadPlugin: failed to initialize shared library /usr/local/opt/firefox/plugins/rpnp.so [/usr/local/opt/firefox/plugins/rpnp.so: undefined symbol: __pure_virtual]
+
+> help(cat)
+> help(help)
+> help(cat,htmlhelp=TRUE)
+help() for cat  is shown in browser /usr/local/opt/firefox/firefox ...
+Use	 help( cat , htmlhelp=FALSE)
+or	 options(htmlhelp = FALSE)
+to revert.
+> Error: No running window found
+LoadPlugin: failed to initialize shared library /usr/local/opt/firefox/plugins/rpnp.so [/usr/local/opt/firefox/plugins/rpnp.so: undefined symbol: __pure_virtual]
+
+> options(browser="/usr/local/opt/firefox/mozilla-xremote-client")
+> help.start()
+Making links in per-session dir ...
+If /usr/local/opt/firefox/mozilla-xremote-client is already running,
+    it is *not* restarted, and you must switch to its window.
+Otherwise, be patient ...
+> /usr/local/opt/firefox/mozilla-xremote-client: error while loading shared libraries: libplds4.so: cannot open shared object file: No such file or directory
+/usr/local/opt/firefox/mozilla-xremote-client: error while loading shared libraries: libplds4.so: cannot open shared object file: No such file or directory
+
+> options(browser="/usr/local/opt/firefox/run-mozilla.sh")
+> help.start()
+Making links in per-session dir ...
+If /usr/local/opt/firefox/run-mozilla.sh is already running, it is
+    *not* restarted, and you must switch to its window.
+Otherwise, be patient ...
+> 
+run-mozilla.sh: Cannot execute file:///tmp/Rtmps29361/.R/doc/html/index.html.
+
+
+> help.start()
+Making links in per-session dir ...
+If /usr/local/opt/firefox/run-mozilla.sh is already running, it is
+    *not* restarted, and you must switch to its window.
+Otherwise, be patient ...
+> 
+run-mozilla.sh: Cannot execute file:///tmp/Rtmps29361/.R/doc/html/index.html.
+
+
+> rfvar3X <- rfvar3(ydata=awmdata[2:dim(awmdata)[1],],lags=5,xdata=matrix(1,dim(awmdata)[1]-1,1))
+Called from: rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1, 
+    dim(awmdata)[1] - 1, 1))
+Browse[1]> c
+Error in rfvar3(ydata = awmdata[2:dim(awmdata)[1], ], lags = 5, xdata = matrix(1,  : 
+	length of dimnames [1] must match that of dims [2]
+> q()
+Save workspace image? [y/n/c]: q()
+Save workspace image? [y/n/c]: 
+Save workspace image? [y/n/c]: y
+
+Process R finished at Mon Aug  9 19:09:10 2004

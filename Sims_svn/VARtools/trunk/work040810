@@ -1,0 +1,506 @@
+
+R : Copyright 2004, The R Foundation for Statistical Computing
+Version 1.9.0  (2004-04-12), ISBN 3-900051-00-3
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for a HTML browser interface to help.
+Type 'q()' to quit R.
+
+	UTF-8 locales are not currently supported
+
+[Previously saved workspace restored]
+
+> options(STERM='iESS', editor='emacsclient')
+> ls()
+ [1] "a"            "a0"           "alphapi1"     "alphapi2"     "alphay"      
+ [6] "awmdata"      "b"            "betar"        "betay1"       "betay2"      
+[11] "bev"          "C"            "dl"           "eG1"          "fac14"       
+[16] "g0"           "g0R"          "g1"           "gensys"       "gpi"         
+[21] "gs"           "gy"           "l"            "last.warning" "ms"          
+[26] "mupi"         "muy"          "Pi"           "Psi"          "qz"          
+[31] "qzd"          "qzdiv"        "qzl"          "qzout"        "qz.out"      
+[36] "qzs"          "qzsout"       "qzswitch"     "rfvar3"       "roL"         
+[41] "roS"          "roU"          "sv"           "w"            "x"           
+[46] "y"            "z"           
+> str(awmdata)
+ mts [1:132, 1:6] 1275 1277 1278 1280 1280 ...
+ - attr(*, "dimnames")=List of 2
+  ..$ : NULL
+  ..$ : chr [1:6] "cons" "invest" "GDP" "Empl" ...
+ - attr(*, "tsp")= num [1:3] 1970 2003    4
+ - attr(*, "class")= chr [1:2] "mts" "ts"
+> help.start()
+Making links in per-session dir ...
+If /usr/X11R6/bin/opera is already running, it is *not* restarted, and
+    you must switch to its window.
+Otherwise, be patient ...
+sh: line 1: /usr/X11R6/bin/opera: No such file or directory
+> sh: line 1: /usr/X11R6/bin/opera: No such file or directory
+
+> options(browser="firefox")
+> options(browser="/usr/local/bin/MozillaFirebird")
+> help.start()
+Making links in per-session dir ...
+If /usr/local/bin/MozillaFirebird is already running, it is *not*
+    restarted, and you must switch to its window.
+Otherwise, be patient ...
+> LoadPlugin: failed to initialize shared library /usr/local/opt/firefox/plugins/rpnp.so [/usr/local/opt/firefox/plugins/rpnp.so: undefined symbol: __pure_virtual]
+
+> help(stop)
+> load("rfvar3X")
+> ls()
+ [1] "a"            "a0"           "alphapi1"     "alphapi2"     "alphay"      
+ [6] "awmdata"      "b"            "betar"        "betay1"       "betay2"      
+[11] "bev"          "C"            "dl"           "eG1"          "fac14"       
+[16] "g0"           "g0R"          "g1"           "gensys"       "gpi"         
+[21] "gs"           "gy"           "l"            "last.warning" "ms"          
+[26] "mupi"         "muy"          "Pi"           "Psi"          "qz"          
+[31] "qzd"          "qzdiv"        "qzl"          "qzout"        "qz.out"      
+[36] "qzs"          "qzsout"       "qzswitch"     "rfvar3"       "rfvar3X"     
+[41] "roL"          "roS"          "roU"          "sv"           "w"           
+[46] "x"            "y"            "z"           
+> str(rfvar3X)
+List of 4
+ $ By : num [1:6, 1:6, 1:5]  1.0791  0.9456  0.2771  0.0319 -0.1969 ...
+  ..- attr(*, "dimnames")=List of 3
+  .. ..$ : chr [1:6] "cons" "invest" "GDP" "Empl" ...
+  .. ..$ : chr [1:6] "cons" "invest" "GDP" "Empl" ...
+  .. ..$ : chr [1:5] "1" "2" "3" "4" ...
+ $ Bx : num [1:6, 1] 0.1599 1.0825 0.2861 0.0917 0.1579 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:6] "cons" "invest" "GDP" "Empl" ...
+  .. ..$ : chr ""
+ $ u  : num [1:133, 1:6]  0.0779  0.1610  0.5728 -0.6089  0.8611 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : NULL
+  .. ..$ : chr [1:6] "cons" "invest" "GDP" "Empl" ...
+ $ xxi: num [1:31, 1:31]  0.061840 -0.000854 -0.034271 -0.014347  0.013840 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:31] "cons1" "cons2" "cons3" "cons4" ...
+  .. ..$ : chr [1:31] "cons1" "cons2" "cons3" "cons4" ...
+> S <- crossprod(rfvar3X.u)/133
+Error in crossprod(rfvar3X.u) : Object "rfvar3X.u" not found
+> S <- crossprod(rfvar3X$u)
+> matrictint(S,rfvar3X$xxi,133)
+Error: couldn't find function "matrictint"
+> matrictint(S,rfvar3X$xxi,133)
+          [,1]      [,2]
+[1,] -1655.794 -1657.896
+[2,] -1658.330 -1656.775
+> matrictint(S,rfvar3X$xxi,133)
+Called from: matrictint(S, rfvar3X$xxi, 133)
+Browse[1]> n
+debug: w <- (-T + k + (m - 1)/2) * m * 0.5 * log(pi) - (T - k) * sum(log(diag(cs))) + 
+    m * sum(log(diag(cx))) + ggammaln(m, (T - k)/2)
+Browse[1]> pi
+[1] 3.141593
+Browse[1]> cs
+           cons    invest      GDP        Empl       dPGDP         RW
+cons   5.428531  6.816573 3.889733 0.442470614 -0.35971665  1.9013496
+invest 0.000000 10.536970 2.307541 0.552370583 -0.07477326  0.4470779
+GDP    0.000000  0.000000 3.326922 0.003147162  0.28218675  1.2757167
+Empl   0.000000  0.000000 0.000000 1.853327605  0.48134223 -1.6746776
+dPGDP  0.000000  0.000000 0.000000 0.000000000  2.77477847 -0.3389557
+RW     0.000000  0.000000 0.000000 0.000000000  0.00000000  4.0217960
+Browse[1]> diag(cs)
+     cons    invest       GDP      Empl     dPGDP        RW 
+ 5.428531 10.536970  3.326922  1.853328  2.774778  4.021796 
+Browse[1]> diag(cx)
+       cons1        cons2        cons3        cons4        cons5      invest1 
+0.2486767926 0.1167641339 0.2121512279 0.4998853903 0.3405096862 0.1799585568 
+     invest2      invest3      invest4      invest5         GDP1         GDP2 
+0.2418252030 0.1112541047 0.2049084250 0.4650207095 0.3170386030 0.1675383680 
+        GDP3         GDP4         GDP5        Empl1        Empl2        Empl3 
+0.2340922801 0.1097400052 0.1937513311 0.4365399356 0.2917966276 0.1587862912 
+       Empl4        Empl5       dPGDP1       dPGDP2       dPGDP3       dPGDP4 
+0.2213658224 0.1080466105 0.1846592164 0.3150342168 0.2520384411 0.1358003042 
+      dPGDP5          RW1          RW2          RW3          RW4          RW5 
+0.0003899430 0.0004173849 0.0003747297 0.0004317850 0.1042085460 0.0030404529 
+             
+0.0813788522 
+Browse[1]> m
+[1] 6
+Browse[1]> ggamaln(m,(T-k)
++ )
+Error: couldn't find function "ggamaln"
+Browse[1]> ggammaln(m,(T-k)
++ )
+          [,1]        [,2]
+[1,]  1.051190 -1.05118980
+[2,] -1.484924  0.07071068
+Browse[1]> c
+          [,1]      [,2]
+[1,] -1655.794 -1657.896
+[2,] -1658.330 -1656.775
+> lgamma(seq(2.5,0,by=-.5))
+[1]  0.2846829  0.0000000 -0.1207822  0.0000000  0.5723649        Inf
+> matrictint(S,rfvar3X$xxi,133)
+Called from: matrictint(S, rfvar3X$xxi, 133)
+Browse[1]> c
+[1] -795.2556
+> lgamma(0)
+[1] Inf
+> help(write)
+> write(t(S),ncol=dim(S)[1],file="Sxxi")
+> write(t(rfvar3X$xxi),ncol=dim(rfvar3X$xxi)[1],file="Sxxi")
+> unlink("Sxxi")
+> ls()
+ [1] "a"            "a0"           "alphapi1"     "alphapi2"     "alphay"      
+ [6] "awmdata"      "b"            "betar"        "betay1"       "betay2"      
+[11] "bev"          "C"            "dl"           "eG1"          "fac14"       
+[16] "g0"           "g0R"          "g1"           "gensys"       "ggammaln"    
+[21] "gpi"          "gs"           "gy"           "l"            "last.warning"
+[26] "matrictint"   "ms"           "mupi"         "muy"          "Pi"          
+[31] "Psi"          "qz"           "qzd"          "qzdiv"        "qzl"         
+[36] "qzout"        "qz.out"       "qzs"          "qzsout"       "qzswitch"    
+[41] "rfvar3"       "rfvar3X"      "roL"          "roS"          "roU"         
+[46] "S"            "sv"           "w"            "x"            "y"           
+[51] "z"           
+> list.files()
+ [1] "awmdata"          "awmdb_2002_4.csv" "c"                "f"               
+ [5] "impulsdt.r"       "impulsdtrf.R"     "impulsdtrf.R~"    "matlab"          
+ [9] "matrictint.R"     "matrictint.R~"    "mgnldnsty.R"      "mgnldnsty.R~"    
+[13] "olsp.R"           "ResponsesToRb.ps" "rfvar3.R"         "rfvar3.R~"       
+[17] "rfvar3X"          "scilab"           "usdata.txt"       "usdata.txt~"     
+[21] "#varprior.R#"     "varprior.R"       "varprior.R~"      "WeissNote.aux"   
+[25] "WeissNote.dvi"    "WeissNote.log"    "WeissNote.out"    "WeissNote.pdf"   
+[29] "WeissNote.tex"    "WeissNote.tex~"   "work040809"       "work040809~"     
+[33] "work04802"        "work04802~"       "ydatar.txt"      
+> write(t(rfvar3X$xxi),ncol=dim(rfvar3X$xxi)[1],file="Sxxi")
+> write(t(S),ncol=dim(S)[1],file="Sxxi")
+> write(t(rfvar3X$xxi),ncol=dim(rfvar3X$xxi)[1],file="Sxxi",append=TRUE)
+> svdxxi <- svd(rfvar3X$xxi)
+> str(svdxxi)
+List of 3
+ $ d: num [1:31] 1.479 1.331 1.025 0.625 0.459 ...
+ $ u: num [1:31, 1:31] -0.01274  0.00606 -0.02648  0.17267  0.04237 ...
+ $ v: num [1:31, 1:31] -0.01274  0.00606 -0.02648  0.17267  0.04237 ...
+> svdxxi$d[1]/svdxxi$d[31]
+[1] 7245260820
+> eps
+Error: Object "eps" not found
+> min(diag(chol(xxi)))
+Error in chol(xxi) : Object "xxi" not found
+> min(diag(chol(rfvar3X$xxi)))
+[1] 0.0003747297
+> options(digits=12)
+> min(diag(chol(rfvar3X$xxi)))
+[1] 0.000374729681492
+> write(t(rfvar3X$xxi),ncol=dim(rfvar3X$xxi)[1],file="xxi")
+> write(t(S),ncol=dim(S)[1],file="S")
+> matrictint(S,rfvar3X$xxi,133)
+Called from: matrictint(S, rfvar3X$xxi, 133)
+Browse[1]> c
+[1] -795.255577245
+> ls()
+ [1] "a"            "a0"           "alphapi1"     "alphapi2"     "alphay"      
+ [6] "awmdata"      "b"            "betar"        "betay1"       "betay2"      
+[11] "bev"          "C"            "dl"           "eG1"          "fac14"       
+[16] "g0"           "g0R"          "g1"           "gensys"       "ggammaln"    
+[21] "gpi"          "gs"           "gy"           "l"            "last.warning"
+[26] "matrictint"   "ms"           "mupi"         "muy"          "Pi"          
+[31] "Psi"          "qz"           "qzd"          "qzdiv"        "qzl"         
+[36] "qzout"        "qz.out"       "qzs"          "qzsout"       "qzswitch"    
+[41] "rfvar3"       "rfvar3X"      "roL"          "roS"          "roU"         
+[46] "S"            "sv"           "svdxxi"       "w"            "x"           
+[51] "y"            "z"           
+> dim(awmdata)
+[1] 132   6
+> str(awmdata)
+ mts [1:132, 1:6] 1275 1277 1278 1280 1280 ...
+ - attr(*, "dimnames")=List of 2
+  ..$ : NULL
+  ..$ : chr [1:6] "cons" "invest" "GDP" "Empl" ...
+ - attr(*, "tsp")= num [1:3] 1970 2003    4
+ - attr(*, "class")= chr [1:2] "mts" "ts"
+> system.time(rfvar3X <- rfvar3(ydata=awmdata[2:132,],lags=5,xdata=matrix(1,131,1),lambda=5,mu=2))
+Called from: rfvar3(ydata = awmdata[2:132, ], lags = 5, xdata = matrix(1, 
+    131, 1), lambda = 5, mu = 2)
+Browse[1]> c
+Error in rfvar3(ydata = awmdata[2:132, ], lags = 5, xdata = matrix(1,  : 
+	length of dimnames [1] must match that of dims [2]
+Timing stopped at: 0.02 0.01 9.77 0 0 
+> system.time(rfvar3X <- rfvar3(ydata=awmdata[2:132,],lags=5,xdata=matrix(1,131,1),lambda=5,mu=2))
+[1] 0.0200000000000 0.0000000000000 0.0199999999995 0.0000000000000
+[5] 0.0000000000000
+> system.time(rfvar3X <- rfvar3(ydata=awmdata[2:132,],lags=5,xdata=matrix(1,131,1),lambda=5,mu=2))
+[1] 0.0200000000000 0.0000000000000 0.0199999999995 0.0000000000000
+[5] 0.0000000000000
+> system.time(chol(rfvar3X$xxi))
+[1] 0 0 0 0 0
+> txx <- matrix(rnorm(40000),200,200)
+> system.time(txx <- crossprod(txx))
+[1] 0.0400000000000 0.0000000000000 0.0299999999997 0.0000000000000
+[5] 0.0000000000000
+> system.time(chol(txx))
+[1] 0.0200000000000 0.0000000000000 0.0200000000004 0.0000000000000
+[5] 0.0000000000000
+> system.time(t(txx) %*% txx)
+[1] 0.0900000000000 0.0000000000000 0.0900000000001 0.0000000000000
+[5] 0.0000000000000
+> ls()
+ [1] "a"            "a0"           "alphapi1"     "alphapi2"     "alphay"      
+ [6] "awmdata"      "b"            "betar"        "betay1"       "betay2"      
+[11] "bev"          "C"            "dl"           "eG1"          "fac14"       
+[16] "g0"           "g0R"          "g1"           "gensys"       "ggammaln"    
+[21] "gpi"          "gs"           "gy"           "l"            "last.warning"
+[26] "matrictint"   "ms"           "mupi"         "muy"          "Pi"          
+[31] "Psi"          "qz"           "qzd"          "qzdiv"        "qzl"         
+[36] "qzout"        "qz.out"       "qzs"          "qzsout"       "qzswitch"    
+[41] "rfvar3"       "rfvar3X"      "roL"          "roS"          "roU"         
+[46] "S"            "sv"           "svdxxi"       "txx"          "w"           
+[51] "x"            "y"            "z"           
+> dim(awmdata)
+[1] 132   6
+> system.time(w <- mgnldnsty(awmdata[2:132,],5,matrix(1,131,1),lambda=5,mu=2,vprior=list(sig=rep(1,6),w=1)))
+Error in eval(expr, envir, enclos) : couldn't find function "mgnldnsty"
+Timing stopped at: 0 0 0 0 0 
+> system.time(w <- mgnldnsty(awmdata[2:132,],5,matrix(1,131,1),lambda=5,mu=2,vprior=list(sig=rep(1,6),w=1)))
+Error in mgnldnsty(awmdata[2:132, ], 5, matrix(1, 131, 1), lambda = 5,  : 
+	couldn't find function "varprior"
+Timing stopped at: 0 0 0 0 0 
+> system.time(w <- mgnldnsty(awmdata[2:132,],5,matrix(1,131,1),lambda=5,mu=2,vprior=list(sig=rep(1,6),w=1)))
+Error in mgnldnsty(awmdata[2:132, ], 5, matrix(1, 131, 1), lambda = 5,  : 
+	couldn't find function "varprior"
+Timing stopped at: 0.01 0 0 0 0 
+> ls()
+ [1] "a"            "a0"           "alphapi1"     "alphapi2"     "alphay"      
+ [6] "awmdata"      "b"            "betar"        "betay1"       "betay2"      
+[11] "bev"          "C"            "dl"           "eG1"          "fac14"       
+[16] "g0"           "g0R"          "g1"           "gensys"       "ggammaln"    
+[21] "gpi"          "gs"           "gy"           "l"            "last.warning"
+[26] "matrictint"   "mgnldnsty"    "ms"           "mupi"         "muy"         
+[31] "Pi"           "Psi"          "qz"           "qzd"          "qzdiv"       
+[36] "qzl"          "qzout"        "qz.out"       "qzs"          "qzsout"      
+[41] "qzswitch"     "rfvar3"       "rfvar3X"      "roL"          "roS"         
+[46] "roU"          "S"            "sv"           "svdxxi"       "txx"         
+[51] "w"            "x"            "y"            "z"           
+> system.time(w <- mgnldnsty(awmdata[2:132,],5,matrix(1,131,1),lambda=5,mu=2,vprior=list(sig=rep(1,6),w=1)))
+Error: Object "mnprior.decay" not found
+Timing stopped at: 0.01 0 0 0 0 
+> system.time(w <- mgnldnsty(awmdata[2:132,],5,matrix(1,131,1),lambda=5,mu=2,vprior=list(sig=rep(1,6),w=1)))
+Error in varprior(nv, nx, lags, mnprior, vprior) : 
+	Target of assignment expands to non-language object
+Timing stopped at: 0 0 0 0 0 
+> options(error=recover)
+> system.time(w <- mgnldnsty(awmdata[2:132,],5,matrix(1,131,1),lambda=5,mu=2,vprior=list(sig=rep(1,6),w=1)))
+Error in varprior(nv, nx, lags, mnprior, vprior) : 
+	Target of assignment expands to non-language object
+
+Enter a frame number, or 0 to exit   
+1:system.time(w <- mgnldnsty(awmdata[2:132, ], 5, matrix(1, 131, 1), lambda = 5, m 
+2:eval(expr, envir = loc.frame) 
+3:eval(expr, envir, enclos) 
+4:mgnldnsty(awmdata[2:132, ], 5, matrix(1, 131, 1), lambda = 5, mu = 2, vprior = l 
+5:varprior(nv, nx, lags, mnprior, vprior) 
+Selection: 5
+Called from: eval(expr, envir, enclos)
+Browse[1]> n
+
+Enter a frame number, or 0 to exit   
+1:system.time(w <- mgnldnsty(awmdata[2:132, ], 5, matrix(1, 131, 1), lambda = 5, m 
+2:eval(expr, envir = loc.frame) 
+3:eval(expr, envir, enclos) 
+4:mgnldnsty(awmdata[2:132, ], 5, matrix(1, 131, 1), lambda = 5, mu = 2, vprior = l 
+5:varprior(nv, nx, lags, mnprior, vprior) 
+Selection: 5
+Browse[1]> 
+
+Enter a frame number, or 0 to exit   
+1:system.time(w <- mgnldnsty(awmdata[2:132, ], 5, matrix(1, 131, 1), lambda = 5, m 
+2:eval(expr, envir = loc.frame) 
+3:eval(expr, envir, enclos) 
+4:mgnldnsty(awmdata[2:132, ], 5, matrix(1, 131, 1), lambda = 5, mu = 2, vprior = l 
+5:varprior(nv, nx, lags, mnprior, vprior) 
+Selection: 5
+Browse[1]>  
+
+Enter a frame number, or 0 to exit   
+1:system.time(w <- mgnldnsty(awmdata[2:132, ], 5, matrix(1, 131, 1), lambda = 5, m 
+2:eval(expr, envir = loc.frame) 
+3:eval(expr, envir, enclos) 
+4:mgnldnsty(awmdata[2:132, ], 5, matrix(1, 131, 1), lambda = 5, mu = 2, vprior = l 
+5:varprior(nv, nx, lags, mnprior, vprior) 
+Selection: c
+Enter an item from the menu, or 0 to exit
+Selection: 5
+Browse[1]> c
+
+Enter a frame number, or 0 to exit   
+1:system.time(w <- mgnldnsty(awmdata[2:132, ], 5, matrix(1, 131, 1), lambda = 5, m 
+2:eval(expr, envir = loc.frame) 
+3:eval(expr, envir, enclos) 
+4:mgnldnsty(awmdata[2:132, ], 5, matrix(1, 131, 1), lambda = 5, mu = 2, vprior = l 
+5:varprior(nv, nx, lags, mnprior, vprior) 
+Selection: 0
+Timing stopped at: 0.01 0 101.4 0 0 
+> options(error)
+Error in options(error) : Object "error" not found
+
+Enter a frame number, or 0 to exit   
+1:options(error) 
+Selection: 0
+> options(error=)
+Error in options(error = ) : Argument is missing, with no default
+
+Enter a frame number, or 0 to exit   
+1:options(error = ) 
+Selection: 0
+> options(error=NULL)
+> debug(varprior)
+> system.time(w <- mgnldnsty(awmdata[2:132,],5,matrix(1,131,1),lambda=5,mu=2,vprior=list(sig=rep(1,6),w=1)))
+debugging in: varprior(nv, nx, lags, mnprior, vprior)
+debug: {
+    if (!is.null(mnprior)) {
+        xdum <- array(0, dim = c(lags + 1, nx, lags, nv), dimnames = list(obsno = 1:(lags + 
+            1), xvbl = 1:nx, lag = 1:lags, lhsy = 1:nv))
+        ydum <- array(0, dim = c(lags + 1, nv, lags, nv), dimnames = list(obsno = 1:(lags + 
+            1), rhsy = 1:nv, lag = 1:lags, lhsy = 1:nv))
+        for (il in 1:lags) ydum[il + 1, , il, ] <- il^mnprior$decay * 
+            diag(vprior$sig)
+        ydum(1, , 1, ) <- diag(vprior$sig)
+        ydum <- mnprior$tight * ydum
+        dim(ydum) <- c(lags + 1, nv, lags * nv)
+        ydum <- ydum[seq(lags + 1, 1, by = -1), , ]
+        xdum <- mnprior$tight * xdum
+        dim(xdum) <- c(lags + 1, nx, lags * nv)
+        xdum <- xdum[seq(lags + 1, 1, by = -1), , ]
+        breaks <- (lags + 1) * matrix(1:(nv * lags), nv * lags, 
+            1)
+        lbreak <- breaks[length(breaks)]
+    }
+    else {
+        ydum <- NULL
+        xdum <- NULL
+        breaks <- NULL
+        lbreak <- 0
+    }
+    if (!is.null(vprior) && vprior$w > 0) {
+        ydum2 <- array(0, dim = c(lags + 1, nv, nv))
+        xdum2 <- array(0, dim = c(lags + 1, nx, nv))
+        ydum2[lags + 1, , ] <- diag(vprior$sig)
+        dim(ydum2) <- c((lags + 1) * nv, nv)
+        dim(ydum) <- c((lags + 1) * nv, lags * nv)
+        ydum <- cbind(ydum, ydum2)
+        dim(xdum2) <- c((lags + 1) * nx, nv)
+        dim(xdum) <- c((lags + 1) * nx, lags * nv)
+        xdum <- cbind(xdum, xdum2)
+        dim(ydum) <- c(lags + 1, nv, dim(ydum)[2])
+        ydum <- aperm(ydum, c(1, 3, 2))
+        dim(ydum) <- c(dim(ydum)[1] * dim(ydum)[2], nv)
+        dim(xdum) <- c(lags + 1, nx, dim(xdum)[2])
+        xdum <- aperm(xdum, c(1, 3, 2))
+        dim(xdum) <- c(dim(xdum)[1] * dim(xdum)[2], nx)
+        breaks <- c(breaks, (lags + 1) * (1:(nv - 1)) + lbreak)
+    }
+    return(list(ydum = ydum, xdum = xdum, breaks = breaks))
+}
+Browse[1]> n
+debug: if (!is.null(mnprior)) {
+    xdum <- array(0, dim = c(lags + 1, nx, lags, nv), dimnames = list(obsno = 1:(lags + 
+        1), xvbl = 1:nx, lag = 1:lags, lhsy = 1:nv))
+    ydum <- array(0, dim = c(lags + 1, nv, lags, nv), dimnames = list(obsno = 1:(lags + 
+        1), rhsy = 1:nv, lag = 1:lags, lhsy = 1:nv))
+    for (il in 1:lags) ydum[il + 1, , il, ] <- il^mnprior$decay * 
+        diag(vprior$sig)
+    ydum(1, , 1, ) <- diag(vprior$sig)
+    ydum <- mnprior$tight * ydum
+    dim(ydum) <- c(lags + 1, nv, lags * nv)
+    ydum <- ydum[seq(lags + 1, 1, by = -1), , ]
+    xdum <- mnprior$tight * xdum
+    dim(xdum) <- c(lags + 1, nx, lags * nv)
+    xdum <- xdum[seq(lags + 1, 1, by = -1), , ]
+    breaks <- (lags + 1) * matrix(1:(nv * lags), nv * lags, 1)
+    lbreak <- breaks[length(breaks)]
+} else {
+    ydum <- NULL
+    xdum <- NULL
+    breaks <- NULL
+    lbreak <- 0
+}
+Browse[1]> n
+debug: xdum <- array(0, dim = c(lags + 1, nx, lags, nv), dimnames = list(obsno = 1:(lags + 
+    1), xvbl = 1:nx, lag = 1:lags, lhsy = 1:nv))
+Browse[1]> n
+debug: ydum <- array(0, dim = c(lags + 1, nv, lags, nv), dimnames = list(obsno = 1:(lags + 
+    1), rhsy = 1:nv, lag = 1:lags, lhsy = 1:nv))
+Browse[1]> n
+debug: for (il in 1:lags) ydum[il + 1, , il, ] <- il^mnprior$decay * 
+    diag(vprior$sig)
+Browse[1]> 
+debug: ydum(1, , 1, ) <- diag(vprior$sig)
+Browse[1]> n
+Error in varprior(nv, nx, lags, mnprior, vprior) : 
+	Target of assignment expands to non-language object
+Timing stopped at: 0 0 34.2 0 0 
+> undebug(varprior)
+NULL
+Warning message: 
+argument is not being debugged in: undebug(varprior) 
+> system.time(w <- mgnldnsty(awmdata[2:132,],5,matrix(1,131,1),lambda=5,mu=2,vprior=list(sig=rep(1,6),w=1)))
+Error in rbind(breaks, T, T + vp$pbreaks) : 
+	Argument "breaks" is missing, with no default
+Timing stopped at: 0.01 0 0 0 0 
+> system.time(w <- mgnldnsty(awmdata[2:132,],5,matrix(1,131,1),lambda=5,mu=2,vprior=list(sig=rep(1,6),w=1)))
+Called from: matrictint(crossprod(var$u), var$xxi, Tu - flat * (nv + 1))
+Browse[1]> c
+Error in if (~nonorm) { : argument is not interpretable as logical
+In addition: Warning message: 
+the condition has length > 1 and only the first element will be used in: if (~nonorm) { 
+Timing stopped at: 0.05 0 9.8 0 0 
+> system.time(w <- mgnldnsty(awmdata[2:132,],5,matrix(1,131,1),lambda=5,mu=2,vprior=list(sig=rep(1,6),w=1)))
+Error in if (~nonorm) { : argument is not interpretable as logical
+In addition: Warning message: 
+the condition has length > 1 and only the first element will be used in: if (~nonorm) { 
+Timing stopped at: 0.05 0 0.08 0 0 
+> system.time(w <- mgnldnsty(awmdata[2:132,],5,matrix(1,131,1),lambda=5,mu=2,vprior=list(sig=rep(1,6),w=1)))
+Error in rbind(ydata[1:Tp, ], ydum) : Object "ydum" not found
+Timing stopped at: 0.05 0 0.0400000000009 0 0 
+> system.time(w <- mgnldnsty(awmdata[2:132,],5,matrix(1,131,1),lambda=5,mu=2,vprior=list(sig=rep(1,6),w=1)))
+[1] "Mismatch of x and y data lengths"
+Error in matrictint(crossprod(varp$u), varp.xxi, Tup - flat * (nv + 1)/2) : 
+	Object "varp.xxi" not found
+In addition: Warning message: 
+number of columns of result
+	not a multiple of vector length (arg 1) in: rbind(xdata[1:Tp, ], vp$xdum) 
+Timing stopped at: 0.04 0 0.0400000000009 0 0 
+> system.time(w <- mgnldnsty(awmdata[2:132,],5,matrix(1,131,1),lambda=5,mu=2,vprior=list(sig=rep(1,6),w=1)))
+Called from: mgnldnsty(awmdata[2:132, ], 5, matrix(1, 131, 1), lambda = 5, 
+    mu = 2, vprior = list(sig = rep(1, 6), w = 1))
+Browse[1]> n
+debug: varp <- rfvar3(rbind(ydata[1:Tp, ], vp$ydum), lags, rbind(xdata[1:Tp, 
+    ], vp$xdum), rbind(tbreaks, Tp, Tp + pbreaks), lambda, mu)
+Browse[1]> dim(xdata)
+[1] 131   1
+Browse[1]> dim(vp$xdum)
+[1] 216   1
+Browse[1]> n
+[1] "Mismatch of x and y data lengths"
+debug: Tup <- dim(varp$u)[1]
+Browse[1]> q
+function (save = "default", status = 0, runLast = TRUE) 
+.Internal(quit(save, status, runLast))
+<environment: namespace:base>
+Warning message: 
+number of columns of result
+	not a multiple of vector length (arg 1) in: rbind(xdata[1:Tp, ], matrix(vp$xdum,length(vp$xdum),1)) 
+Browse[1]> c
+Error in matrictint(crossprod(varp$u), varp.xxi, Tup - flat * (nv + 1)/2) : 
+	Object "varp.xxi" not found
+Timing stopped at: 0.05 0 124.73 0 0 
+> system.time(w <- mgnldnsty(awmdata[2:132,],5,matrix(1,131,1),lambda=5,mu=2,vprior=list(sig=rep(1,6),w=1)))
+[1] "Mismatch of x and y data lengths"
+Error in crossprod(x, y) : requires numeric matrix/vector arguments
+In addition: Warning message: 
+number of columns of result
+	not a multiple of vector length (arg 1) in: rbind(xdata[1:Tp, ], vp$xdum) 
+Timing stopped at: 0.04 0 0.0399999999991 0 0 
+> 

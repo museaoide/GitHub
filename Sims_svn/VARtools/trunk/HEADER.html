@@ -1,0 +1,31 @@
+<html>
+  <head>
+    <title>VARtools</title>
+    <meta name=author content="Chris Sims">
+    <style>
+    <!--
+    dt{color:blue}
+    -->
+    </style>
+  </head>
+  <body>
+  <div align="center"><h3>VAR Tools</h3></div>
+  All the programs below except impulsdt are implemented in both R and matlab.  The R versions are the ones I use currently in research and thus either are now or are on their way to being more thoroughly tested and up to date.  I'll still correct any reported errors in the m files.
+  <dl>
+  <dt>rfvar3</dt>
+  <dd>Estimates a reduced form VAR, allowing automatic implementation of "Minnesota prior" style 
+  dummy observations favoring persistence.  Also allows breaks in the data, which makes it possible to
+  use more general dummy observations</dd>
+  <dt>matrictint</dt>
+  <dd>Scale factor for a matrix <em>t</em> distribution, like the posterior from a VAR</dd>
+  <dt>mgnldnsty</dt>
+  <dd>Computes a VAR estimate and the integrated posterior, with a proper prior specified using dummy observations</dd>
+  <dt>impulsdtrf</dt>
+  <dd>Impulse responses from a VAR, using the output of rfvar3 or mgnldnsty</dd>
+  <dt>varprior</dt>
+  <dd>Generates the dummy observations that implement the parts of the Minnesota prior not included in rfvar3.</dd>
+  <dt>impulsdt</dt>
+  <dd>Impulse responses from a SVAR <em>A(L)</em> operator.  Generally using impulsdtrf with non-identity <em>A<sub>0</sub></em> is more convenient</dd>
+  </dl>
+  </body>
+</html>

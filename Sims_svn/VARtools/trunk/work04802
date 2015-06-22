@@ -1,0 +1,295 @@
+
+R : Copyright 2004, The R Foundation for Statistical Computing
+Version 1.9.0  (2004-04-12), ISBN 3-900051-00-3
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for a HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> options(STERM='iESS', editor='emacsclient')
+> list.files()
+ [1] "awmdb_2002_4.csv" "c"                "f"                "impulsdt.r"      
+ [5] "impulsdtrf.R"     "impulsdtrf.R~"    "matlab"           "matrictint.R"    
+ [9] "matrictint.R~"    "mgnldnsty.R"      "mgnldnsty.R~"     "ResponsesToRb.ps"
+[13] "rfvar3.R"         "rfvar3.R~"        "scilab"           "usdata.txt"      
+[17] "varprior.R"       "varprior.R~"      "WeissNote.aux"    "WeissNote.dvi"   
+[21] "WeissNote.log"    "WeissNote.out"    "WeissNote.pdf"    "WeissNote.tex"   
+[25] "WeissNote.tex~"   "ydatar.txt"      
+> awmdata <- read.csv("awmdb_2002_4.csv",header=TRUE)
+> str(awmdata)
+`data.frame':	132 obs. of  8 variables:
+ $ date  : Factor w/ 132 levels "1970Q1","1970Q2",..: 1 2 3 4 5 6 7 8 9 10 ...
+ $ cons  : num  1275 1277 1278 1280 1280 ...
+ $ invest: num  1190 1195 1196 1196 1196 ...
+ $ GDP   : num  1328 1330 1331 1332 1332 ...
+ $ Empl  : num  1157 1158 1158 1158 1158 ...
+ $ dPGDP : num    NA 1.67 1.34 1.50 2.55 ...
+ $ RW    : num   99.5 102.2 105.0 107.1 107.2 ...
+ $ R     : num  1.98 1.97 1.89 1.80 1.57 ...
+> awmdata$date <- as.vector(awmdata$date)
+> str(awmdata)
+`data.frame':	132 obs. of  8 variables:
+ $ date  : chr  "1970Q1" "1970Q2" "1970Q3" "1970Q4" ...
+ $ cons  : num  1275 1277 1278 1280 1280 ...
+ $ invest: num  1190 1195 1196 1196 1196 ...
+ $ GDP   : num  1328 1330 1331 1332 1332 ...
+ $ Empl  : num  1157 1158 1158 1158 1158 ...
+ $ dPGDP : num    NA 1.67 1.34 1.50 2.55 ...
+ $ RW    : num   99.5 102.2 105.0 107.1 107.2 ...
+ $ R     : num  1.98 1.97 1.89 1.80 1.57 ...
+> help(ts)
+> awmdata <- as.ts(awmdata,frequency=4,start=c(1970,1))
+Error in as.ts(awmdata, frequency = 4, start = c(1970, 1)) : 
+	unused argument(s) (frequency ...)
+> awmdata <- ts(awmdata,frequency=4,start=c(1970,1))
+Error in data.matrix(data) : non-numeric data type in frame
+> awmdata <- ts(awmdata[,2:7],frequency=4,start=c(1970,1))
+> str(awmdata)
+ mts [1:132, 1:6] 1275 1277 1278 1280 1280 ...
+ - attr(*, "dimnames")=List of 2
+  ..$ : NULL
+  ..$ : chr [1:6] "cons" "invest" "GDP" "Empl" ...
+ - attr(*, "tsp")= num [1:3] 1970 2003    4
+ - attr(*, "class")= chr [1:2] "mts" "ts"
+> plot(awmdata[,1:3])
+> awmdata[132,]
+        cons       invest          GDP         Empl        dPGDP           RW 
+1359.5907646 1247.1206897 1408.6487384 1170.2665715    0.4304099  165.4174156 
+> help(end)
+> end(awmdata)
+[1] 2002    4
+> ls()
+ [1] "a"            "a0"           "alphapi1"     "alphapi2"     "alphay"      
+ [6] "awmdata"      "b"            "betar"        "betay1"       "betay2"      
+[11] "bev"          "C"            "eG1"          "fac14"        "g0"          
+[16] "g0R"          "g1"           "gensys"       "gpi"          "gs"          
+[21] "gy"           "l"            "last.warning" "mupi"         "muy"         
+[26] "Pi"           "Psi"          "qz"           "qzd"          "qzdiv"       
+[31] "qzl"          "qzout"        "qz.out"       "qzs"          "qzsout"      
+[36] "qzswitch"     "roL"          "roS"          "roU"          "sv"          
+[41] "w"            "x"            "y"            "z"           
+> str(y)
+Error: syntax error
+> str(y)
+ num [1:10, 1:10]  0.541  2.694 -0.805  1.650 -1.692 ...
+> dl <- c(dimnames(awmdata)[2],dimnames(awmdata)[2])
+> str(dl)
+List of 2
+ $ : chr [1:6] "cons" "invest" "GDP" "Empl" ...
+ $ : chr [1:6] "cons" "invest" "GDP" "Empl" ...
+> dl <- list(dimnames(awmdata)[[2]],dimnames(awmdata)[[2]])
+> dl
+[[1]]
+[1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"    
+
+[[2]]
+[1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"    
+
+> dl <- list(c(dimnames(awmdata)[[2]],dimnames(awmdata)[[2]]))
+> dl
+[[1]]
+ [1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"     "cons"   "invest"
+ [9] "GDP"    "Empl"   "dPGDP"  "RW"    
+
+> dl <- list(c(as.list(dimnames(awmdata)[2]),as.list(dimnames(awmdata)[2])))
+> dl
+[[1]]
+[[1]][[1]]
+[1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"    
+
+[[1]][[2]]
+[1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"    
+
+
+> dl <- c(dimnames(awmdata)[2],dimnames(awmdata)[2],recursive=TRUE)
+> dl
+ [1] "cons"   "invest" "GDP"    "Empl"   "dPGDP"  "RW"     "cons"   "invest"
+ [9] "GDP"    "Empl"   "dPGDP"  "RW"    
+> system.time(diag(1:100) %*% matrix(rnorm(10000),100,100))
+[1] 0.00 0.00 0.01 0.00 0.00
+> system.time(diag(1:100) %*% matrix(rnorm(10000),100,100))
+[1] 0.02 0.01 0.02 0.00 0.00
+> system.time(matrix(1:100,100,100)*matrix(rnorm(10000),100,100))
+[1] 0.02 0.00 0.01 0.00 0.00
+> help system.time
+Error: syntax error
+> help(system.time)
+> B <- matrix(rnorm(1e6),1000,1000)
+> A <- matrix(1:1000,1000,1000)
+> system.time(A*B)
+[1] 0.09 0.01 0.10 0.00 0.00
+> system.time(diag(1:1000) %*% B)
+[1] 11.28  0.04 11.32  0.00  0.00
+> system.time(matrix(1:1000,1000,1000)*B)
+[1] 0.11 0.02 0.13 0.00 0.00
+> A <- matrix(rand(10000,100,100))
+Error in as.vector(data) : couldn't find function "rand"
+> A <- matrix(rnorm(10000,100,100))
+> B <- matrix(rnorm(10000,100,100))
+> system.time(A %*% B)
+Error in A %*% B : non-conformable arguments
+Timing stopped at: 0 0 0 0 0 
+> dim(A)
+[1] 10000     1
+> A <- matrix(rnorm(10000),100,100)
+> B <- matrix(rnorm(10000),100,100)
+> system.time(A %*% B)
+[1] 0.01 0.00 0.01 0.00 0.00
+> A <- matrix(rnorm(1000000),1000,1000)
+> B <- matrix(rnorm(1000000),1000,1000)
+> system.time(A %*% B)
+[1] 11.07  0.00 11.08  0.00  0.00
+> system.time(crossprod(A,B))
+[1] 9.00 0.01 9.00 0.00 0.00
+> system.time(t(crossprod(A,B)))
+[1] 8.95 0.03 8.99 0.00 0.00
+> system.time(crossprod(A,t(B)))
+[1] 9.04 0.02 9.05 0.00 0.00
+> system.time(A%*%t(B))
+[1] 11.14  0.01 11.15  0.00  0.00
+> ls()
+ [1] "a"            "A"            "a0"           "alphapi1"     "alphapi2"    
+ [6] "alphay"       "awmdata"      "b"            "B"            "betar"       
+[11] "betay1"       "betay2"       "bev"          "C"            "dl"          
+[16] "eG1"          "fac14"        "g0"           "g0R"          "g1"          
+[21] "gensys"       "gpi"          "gs"           "gy"           "l"           
+[26] "last.warning" "mupi"         "muy"          "Pi"           "Psi"         
+[31] "qz"           "qzd"          "qzdiv"        "qzl"          "qzout"       
+[36] "qz.out"       "qzs"          "qzsout"       "qzswitch"     "roL"         
+[41] "roS"          "roU"          "sv"           "w"            "x"           
+[46] "y"            "z"           
+> rm(A,B)
+> help(objects)
+> help(Memory)
+> help(object.size)
+> sapply(ls(),FUN=object.size)
+           a           a0     alphapi1     alphapi2       alphay      awmdata 
+          44           44           52           52           44           44 
+           b        betar       betay1       betay2          bev            C 
+          44           44           44           44           44           44 
+          dl          eG1        fac14           g0          g0R           g1 
+          44           44           44           44           44           44 
+      gensys          gpi           gs           gy            l last.warning 
+          44           44           44           44           44           52 
+        mupi          muy           Pi          Psi           qz          qzd 
+          44           44           44           44           44           44 
+       qzdiv          qzl        qzout       qz.out          qzs       qzsout 
+          44           44           44           44           44           44 
+    qzswitch          roL          roS          roU           sv            w 
+          52           44           44           44           44           44 
+           x            y            z 
+          44           44           44 
+> object.size(awmdata)
+[1] 6864
+> ms <- sapply(ls(),FUN=object.size)
+> ms
+           a           a0     alphapi1     alphapi2       alphay      awmdata 
+          44           44           52           52           44           44 
+           b        betar       betay1       betay2          bev            C 
+          44           44           44           44           44           44 
+          dl          eG1        fac14           g0          g0R           g1 
+          44           44           44           44           44           44 
+      gensys          gpi           gs           gy            l last.warning 
+          44           44           44           44           44           52 
+        mupi          muy           Pi          Psi           qz          qzd 
+          44           44           44           44           44           44 
+       qzdiv          qzl        qzout       qz.out          qzs       qzsout 
+          44           44           44           44           44           44 
+    qzswitch          roL          roS          roU           sv            w 
+          52           44           44           44           44           44 
+           x            y            z 
+          44           44           44 
+> str(ms)
+ Named num [1:45] 44 44 52 52 44 44 44 44 44 44 ...
+ - attr(*, "names")= chr [1:45] "a" "a0" "alphapi1" "alphapi2" ...
+> object.size(a)
+[1] 248
+> sapply(ls(),FUN=function(x)  object.size(get(x,envir=NULL)))
+Error in get(x, envir, mode, inherits) : invalid first argument
+> ls()[1]
+[1] "a"
+> get("a")
+           [,1]       [,2]       [,3]       [,4]
+[1,] -0.8328359 -0.6984093 -0.8847679 -0.3154865
+[2,]  0.5415640  1.2200289 -1.3691302  0.1711713
+[3,]  0.5754989 -1.9584994  0.2900659 -0.4276039
+[4,] -0.2072575 -1.0616083 -0.5075303 -0.7971086
+> ls()
+ [1] "a"            "a0"           "alphapi1"     "alphapi2"     "alphay"      
+ [6] "awmdata"      "b"            "betar"        "betay1"       "betay2"      
+[11] "bev"          "C"            "dl"           "eG1"          "fac14"       
+[16] "g0"           "g0R"          "g1"           "gensys"       "gpi"         
+[21] "gs"           "gy"           "l"            "last.warning" "ms"          
+[26] "mupi"         "muy"          "Pi"           "Psi"          "qz"          
+[31] "qzd"          "qzdiv"        "qzl"          "qzout"        "qz.out"      
+[36] "qzs"          "qzsout"       "qzswitch"     "roL"          "roS"         
+[41] "roU"          "sv"           "w"            "x"            "y"           
+[46] "z"           
+> ls(all=TRUE)
+ [1] "a"            "a0"           "alphapi1"     "alphapi2"     "alphay"      
+ [6] "awmdata"      "b"            "betar"        "betay1"       "betay2"      
+[11] "bev"          "C"            "dl"           "eG1"          ".ess.lvsave" 
+[16] "fac14"        "g0"           "g0R"          "g1"           "gensys"      
+[21] "gpi"          "gs"           "gy"           "l"            ".Last.value" 
+[26] "last.warning" "ms"           "mupi"         "muy"          "Pi"          
+[31] "Psi"          "qz"           "qzd"          "qzdiv"        "qzl"         
+[36] "qzout"        "qz.out"       "qzs"          "qzsout"       "qzswitch"    
+[41] ".Random.seed" "roL"          "roS"          "roU"          "sv"          
+[46] ".Traceback"   "w"            "x"            "y"            "z"           
+> .Last.Value
+Error: Object ".Last.Value" not found
+> .Last.value
+$htmlhelp
+[1] TRUE
+
+> a
+           [,1]       [,2]       [,3]       [,4]
+[1,] -0.8328359 -0.6984093 -0.8847679 -0.3154865
+[2,]  0.5415640  1.2200289 -1.3691302  0.1711713
+[3,]  0.5754989 -1.9584994  0.2900659 -0.4276039
+[4,] -0.2072575 -1.0616083 -0.5075303 -0.7971086
+> .Last.Value
+Error: Object ".Last.Value" not found
+> .Last.value
+$htmlhelp
+[1] TRUE
+
+> sapply(ls(),FUN=function(x)  object.size(get(x,envir=NULL)))
+Error in get(x, envir, mode, inherits) : variable "a" was not found
+> get(x)
+Error in get(x, envir, mode, inherits) : invalid first argument
+> get("a")
+           [,1]       [,2]       [,3]       [,4]
+[1,] -0.8328359 -0.6984093 -0.8847679 -0.3154865
+[2,]  0.5415640  1.2200289 -1.3691302  0.1711713
+[3,]  0.5754989 -1.9584994  0.2900659 -0.4276039
+[4,] -0.2072575 -1.0616083 -0.5075303 -0.7971086
+> sapply(ls(),FUN=function(x)  object.size(get(x)))
+           a           a0     alphapi1     alphapi2       alphay      awmdata 
+         248          120           36           36           36         6864 
+           b        betar       betay1       betay2          bev            C 
+         248           36           36           36           36          184 
+          dl          eG1        fac14           g0          g0R           g1 
+         172         1444          180          632          632          632 
+      gensys          gpi           gs           gy            l last.warning 
+       60152           36         2536           36          248          272 
+          ms         mupi          muy           Pi          Psi           qz 
+        1048           36           36          184          376        15176 
+         qzd        qzdiv          qzl        qzout       qz.out          qzs 
+        1680        14088         7056         1996         7564         1680 
+      qzsout     qzswitch          roL          roS          roU           sv 
+        1680        35364           36           36           36          516 
+           w            x            y            z 
+         152           44          920           44 
+> quit()
+Save workspace image? [y/n/c]: y
