@@ -24,11 +24,8 @@ results_15610f=plutusTvv5(listData_15610c,nit=700,mnprior=list(tight=1, decay=.5
 *Decreased tightness of mn prior and increased tightness of xmnprior for comparison with *f (1:35)
 results_15610g=plutusTvv5(listData_15610c,nit=700,mnprior=list(tight=1, decay=.5), xmnprior=list(tight=10,decay=.5), seedx=x1)
 
-results_15610c= plutusError(endct=50)
-
-*
 results_15610h=plutusTvv5(listData_15610c,nit=700,xmnprior=list(tight=5,decay=.5), seedx=x1)
-
+results_15610i=plutusTvv5(listData_15610c,nit=700,xmnprior=list(tight=7,decay=dx=x1)
 
 --
 ##Allow for country specific impulse response
