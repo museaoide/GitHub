@@ -30,6 +30,8 @@ results_15610j=plutusTvv5(listData_15610c,nit=700,mnprior=list(tight=4, decay=.5
 
 *NEXT. Try tigher Minnesota Prior, and tighter prior on the prior over the country ys.
 results_15610k=plutusTvv5(listData_15610c,nit=700,mnprior=list(tight=4, decay=.5), xmnprior=list(tight=2,decay=.5), seedx=x1)
+
+
 results_15610l=plutusTvv5(listData_15610c,nit=700,mnprior=list(tight=5, decay=.5), xmnprior=list(tight=1,decay=.5), seedx=x1)
 
 
