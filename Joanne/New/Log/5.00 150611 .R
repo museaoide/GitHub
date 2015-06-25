@@ -33,7 +33,11 @@ results_15610k=plutusTvv5(listData_15610c,nit=700,mnprior=list(tight=4, decay=.5
 
 
 listData_15610c=tvvData_noffr4(countries=c("can", "che", "uk", "jpn", "aus", "za") ,data,commdata, SecondaryBrk=c(0, 2015))
+
+
 results_15610l=plutusTvv5(listData_15610c,nit=700,mnprior=list(tight=5, decay=.5), xmnprior=list(tight=2,decay=.5), seedx=x1)
+results_15610m=plutusTvv5(listData_15610c,nit=700,mnprior=list(tight=3, decay=.5), xmnprior=list(tight=1,decay=.5), seedx=x1)
+results_15610n=plutusTvv5(listData_15610c,nit=700,mnprior=list(tight=5, decay=.5), xmnprior=list(tight=5,decay=.5), seedx=x1)
 
 
 ##
